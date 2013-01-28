@@ -1,11 +1,14 @@
-from Products.CMFPlone.tests import PloneTestCase
-
 from DateTime import DateTime
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestDateIndexRanges(PloneTestCase.PloneTestCase):
+class TestDateIndexRanges(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase(self)
         self.catalog = self.portal.portal_catalog
         self.folder.invokeFactory('Document', 'doc1', title='Foo')
 

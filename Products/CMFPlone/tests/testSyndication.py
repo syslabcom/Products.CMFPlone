@@ -1,18 +1,22 @@
-from Products.CMFCore.utils import getToolByName
 from AccessControl import Unauthorized
-from Products.CMFPlone.tests import PloneTestCase
+from plone.registry.interfaces import IRegistry
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.browser.syndication.adapters import BaseItem
+from Products.CMFPlone.interfaces.syndication import IFeed
 from Products.CMFPlone.interfaces.syndication import IFeedSettings
 from Products.CMFPlone.interfaces.syndication import ISiteSyndicationSettings
-from plone.registry.interfaces import IRegistry
-from zope.component import getUtility
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from zExceptions import NotFound
-from Products.CMFPlone.interfaces.syndication import IFeed
-from Products.CMFPlone.browser.syndication.adapters import BaseItem
+from zope.component import getUtility
 
 
-class BaseSyndicationTest(PloneTestCase.PloneTestCase):
+class BaseSyndicationTest(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.syndication = getToolByName(self.portal, 'portal_syndication')
         self.folder.invokeFactory('Document', 'doc1')
         self.folder.invokeFactory('Document', 'doc2')
@@ -34,7 +38,7 @@ class TestOldSyndicationTool(BaseSyndicationTest):
         # Make sure isSiteSyndicationAllowed returns proper value so that tabs
         # appear
         self.assertTrue(self.syndication.isSiteSyndicationAllowed())
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.syndication.editProperties(isAllowed=False)
         self.assertTrue(not self.syndication.isSiteSyndicationAllowed())
 
@@ -50,7 +54,7 @@ class TestOldSyndicationTool(BaseSyndicationTest):
         self.assertEqual(len(content), 3)
 
     def testOwnerCanEnableAndDisableSyndication(self):
-        self.setRoles(['Owner'])
+        setRoles(self.portal, TEST_USER_ID, ['Owner'])
         self.syndication.disableSyndication(self.folder)
         self.assertFalse(self.syndication.isSyndicationAllowed(self.folder))
         self.syndication.enableSyndication(self.folder)

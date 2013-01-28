@@ -2,22 +2,33 @@
 # plone.theme) take precedence over views assigned to layers from other
 # add-on products (a la plone.browserlayer).
 
-from Products.CMFPlone.tests import PloneTestCase
-from zope.publisher.browser import TestRequest
-
-from zope.event import notify
-from zope.interface import Interface
-from zope.publisher.interfaces.browser import IDefaultBrowserLayer
-from zope.traversing.interfaces import BeforeTraverseEvent
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
 from plone.browserlayer.utils import register_layer, unregister_layer
 from plonetheme.sunburst.browser.interfaces import IThemeSpecific
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from zope.event import notify
+from zope.interface import Interface
+from zope.publisher.browser import TestRequest
+from zope.publisher.interfaces.browser import IDefaultBrowserLayer
+from zope.traversing.interfaces import BeforeTraverseEvent
 
 
 class IAdditiveLayer(Interface):
     pass
 
 
-class TestBrowserLayerPrecedence(PloneTestCase.FunctionalTestCase):
+class TestBrowserLayerPrecedence(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
+        setRoles(self.portal, TEST_USER_ID, ['Owner'])
 
     def _get_request_interfaces(self):
         request = TestRequest()

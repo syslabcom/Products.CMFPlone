@@ -1,17 +1,18 @@
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
-
-from Products.CMFPlone.utils import _createObjectByType
-
 from AccessControl import Unauthorized
 from Products.CMFCore.permissions import DeleteObjects
-
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.utils import _createObjectByType
 from zExceptions import BadRequest
 
 
-class TestPloneFolder(PloneTestCase.PloneTestCase):
+class TestPloneFolder(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         # Create a bunch of subfolders
         self.folder.invokeFactory('Folder', id='sub1')
         self.folder.invokeFactory('Folder', id='sub2')
@@ -32,7 +33,13 @@ class TestPloneFolder(PloneTestCase.PloneTestCase):
         self.folder.manage_main()
 
 
-class TestCheckIdAvailable(PloneTestCase.PloneTestCase):
+class TestCheckIdAvailable(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+
     # PortalFolder.checkIdAvailable() did not properly catch
     # zExceptions.BadRequest.
     # Fixed in CMFCore.PortalFolder, not Plone.
@@ -61,10 +68,13 @@ class TestCheckIdAvailable(PloneTestCase.PloneTestCase):
         self.assertFalse(self.folder.checkIdAvailable('foo'))
 
 
-class TestFolderListing(PloneTestCase.PloneTestCase):
+class TestFolderListing(CMFPloneTestCase):
     # Tests for http://dev.plone.org/plone/ticket/3512
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.workflow = self.portal.portal_workflow
         # Create some objects to list
         self.folder.invokeFactory('Folder', id='sub1')
@@ -127,11 +137,14 @@ class TestFolderListing(PloneTestCase.PloneTestCase):
         self.assertEqual(self._contentIds(self.folder.A), [])
 
 
-class TestManageDelObjects(PloneTestCase.PloneTestCase):
+class TestManageDelObjects(CMFPloneTestCase):
     # manage_delObjects should check 'Delete objects'
     # permission on contained items.
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         # Create a bunch of folders
         self.folder.invokeFactory('Folder', id='sub1')
         self.sub1 = self.folder.sub1
@@ -157,9 +170,12 @@ class TestManageDelObjects(PloneTestCase.PloneTestCase):
         self.assertFalse('sub1' in self.folder.objectIds())
 
 
-class TestManageDelObjectsInPortal(PloneTestCase.PloneTestCase):
+class TestManageDelObjectsInPortal(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         _createObjectByType('Folder', self.portal, id='sub1')
         self.sub1 = self.portal.sub1
 

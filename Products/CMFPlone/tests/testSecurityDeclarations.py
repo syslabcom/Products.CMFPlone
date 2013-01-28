@@ -1,36 +1,43 @@
 # Tests the security declarations Plone makes on resources
 # for access by restricted code (aka PythonScripts)
 
-from Testing import ZopeTestCase
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
-
-from zExceptions import Unauthorized
-from ZODB.POSException import ConflictError
-from Products.ZCTextIndex.ParseTree import ParseError
 from OFS.CopySupport import CopyError
 from Products.CMFDefault.DiscussionTool import DiscussionNotAllowed
 from Products.CMFPlone.PloneTool import AllowSendto
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.ZCTextIndex.ParseTree import ParseError
+from ZODB.POSException import ConflictError
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import logout
+from plone.app.testing import setRoles
+from zExceptions import Unauthorized
 
 
-class RestrictedPythonTest(ZopeTestCase.ZopeTestCase):
+class RestrictedPythonTest(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def addPS(self, id, params='', body=''):
-        factory = self.folder.manage_addProduct['PythonScripts']
+        factory = self.portal.folder.manage_addProduct['PythonScripts']
         factory.manage_addPythonScript(id)
-        self.folder[id].ZPythonScript_edit(params, body)
+        self.portal.folder[id].ZPythonScript_edit(params, body)
 
     def check(self, psbody):
         self.addPS('ps', body=psbody)
         try:
-            self.folder.ps()
+            self.portal.folder.ps()
         except (ImportError, Unauthorized), e:
             self.fail(e)
 
     def checkUnauthorized(self, psbody):
         self.addPS('ps', body=psbody)
         try:
-            self.folder.ps()
+            self.portal.folder.ps()
         except (AttributeError, ImportError, Unauthorized):
             pass
 
@@ -184,7 +191,7 @@ except ConflictError: pass
                       (e.__class__.__name__, e, e.__module__))
 
     def testCatch_ConflictErrorRaisedByPythonModule(self):
-        self.folder._setObject('raiseConflictError',
+        self.portal.folder._setObject('raiseConflictError',
                                dummy.Raiser(ConflictError))
         try:
             self.check('''
@@ -204,7 +211,7 @@ except ConflictError: pass
                    'print Products.ZCTextIndex.ParseTree.ParseError')
 
     def testCatch_ParseErrorRaisedByPythonModule(self):
-        self.folder._setObject('raiseParseError', dummy.Raiser(ParseError))
+        self.portal.folder._setObject('raiseParseError', dummy.Raiser(ParseError))
         try:
             self.check('''
 from Products.ZCTextIndex.ParseTree import ParseError
@@ -225,7 +232,7 @@ except ParseError: pass
                    'print DateTime.interfaces.DateTimeError')
 
     def testCatch_DateTimeErrorRaisedByPythonModule(self):
-        self.folder._setObject('raiseDateTimeError',
+        self.portal.folder._setObject('raiseDateTimeError',
                                dummy.Raiser(self.DateTimeError))
         try:
             self.check('''
@@ -247,7 +254,7 @@ except DateTimeError: pass
                    'print DateTime.interfaces.SyntaxError')
 
     def testCatch_SyntaxErrorRaisedByPythonModule(self):
-        self.folder._setObject('raiseSyntaxError',
+        self.portal.folder._setObject('raiseSyntaxError',
                                dummy.Raiser(self.SyntaxError))
         try:
             self.check('''
@@ -267,7 +274,7 @@ except SyntaxError: pass
                    'print OFS.CopySupport.CopyError')
 
     def testCatch_CopyErrorRaisedByPythonModule(self):
-        self.folder._setObject('raiseCopyError', dummy.Raiser(CopyError))
+        self.portal.folder._setObject('raiseCopyError', dummy.Raiser(CopyError))
         try:
             self.check('''
 from OFS.CopySupport import CopyError
@@ -288,7 +295,7 @@ except CopyError: pass
             'print Products.CMFDefault.DiscussionTool.DiscussionNotAllowed')
 
     def testCatch_DiscussionNotAllowedRaisedByPythonModule(self):
-        self.folder._setObject('raiseDiscussionNotAllowed',
+        self.portal.folder._setObject('raiseDiscussionNotAllowed',
                                dummy.Raiser(DiscussionNotAllowed))
         try:
             self.check('''
@@ -364,7 +371,12 @@ class TestAcquisitionMethods(RestrictedPythonTest):
         self.checkUnauthorized('print context.aq_acquire')
 
 
-class TestAllowSendtoSecurity(PloneTestCase.PloneTestCase):
+class TestAllowSendtoSecurity(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def test_AllowSendto(self):
         portal = self.portal
@@ -374,31 +386,31 @@ class TestAllowSendtoSecurity(PloneTestCase.PloneTestCase):
         # should be allowed as Member
         self.assertTrue(checkPermission(AllowSendto, portal))
         # should be allowed as Manager
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.assertTrue(checkPermission(AllowSendto, portal))
         # should be allowed as anonymous
-        self.logout()
+        logout()
         self.assertTrue(checkPermission(AllowSendto, portal))
 
     def test_allowsendto_changed(self):
         mtool = self.portal.portal_membership
         checkPermission = mtool.checkPermission
 
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.manage_permission(AllowSendto, roles=('Manager',),
                                       acquire=False)
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
         self.assertFalse(checkPermission(AllowSendto, self.portal))
 
     def test_sendto_script_failes(self):
         # set permission to Manager only
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.manage_permission(AllowSendto, roles=('Manager',),
                                       acquire=False)
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         # get sendto script in context of folder
-        sendto = self.folder.sendto
+        sendto = self.portal.folder.sendto
         # should faile with the not allowed msg check if the msg
         # contains the string
         msg = sendto()
@@ -406,16 +418,26 @@ class TestAllowSendtoSecurity(PloneTestCase.PloneTestCase):
         self.assertFalse(str(msg).find(errormsg) != -1, str(msg))
 
 
-class TestSkinSecurity(PloneTestCase.PloneTestCase):
+class TestSkinSecurity(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def test_OwnerCanViewConstrainTypesForm(self):
         try:
-            self.folder.restrictedTraverse('folder_constraintypes_form')
+            self.portal.folder.restrictedTraverse('folder_constraintypes_form')
         except Unauthorized:
             self.fail("Owner could not access folder_constraintypes_form")
 
 
-class TestNavtreeSecurity(PloneTestCase.PloneTestCase, RestrictedPythonTest):
+class TestNavtreeSecurity(RestrictedPythonTest):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def testNavtreeStrategyBase(self):
         self.check(

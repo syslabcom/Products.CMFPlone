@@ -28,6 +28,7 @@ setup(name='Products.CMFPlone',
       zip_safe=False,
       extras_require=dict(
         test=[
+          'plone.app.testing',
           'Products.PloneTestCase',
           'zope.globalrequest',
           'zope.testing',

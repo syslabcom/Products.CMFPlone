@@ -1,12 +1,15 @@
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
-
 from Products.CMFPlone.browser.ploneview import Plone
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestPloneView(PloneTestCase.PloneTestCase):
+class TestPloneView(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder.invokeFactory('Document', 'test',
                                   title='Test default page')
         self.view = Plone(self.portal, self.app.REQUEST)
@@ -86,7 +89,7 @@ class TestPloneView(PloneTestCase.PloneTestCase):
         view = Plone(self.portal, self.app.REQUEST)
         self.assertTrue(view.isPortalOrPortalDefaultPage())
         # But not a document
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Document', 'portal_test',
                                   title='Test default page')
         self._invalidateRequestMemoizations()
@@ -147,10 +150,13 @@ class TestPloneView(PloneTestCase.PloneTestCase):
         self.assertEqual('utf-8', view.site_encoding())
 
 
-class TestVisibleIdsEnabled(PloneTestCase.PloneTestCase):
+class TestVisibleIdsEnabled(CMFPloneTestCase):
     '''Tests the visibleIdsEnabled method'''
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.view = Plone(self.portal, self.app.REQUEST)
         self.member = self.portal.portal_membership.getAuthenticatedMember()
         self.props = self.portal.portal_properties.site_properties

@@ -1,12 +1,15 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.ResourceRegistries.config import CSSTOOLNAME, JSTOOLNAME
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.ResourceRegistries.config import CSSTOOLNAME, JSTOOLNAME
 
 
-class TestCSSRegistry(PloneTestCase.PloneTestCase):
+class TestCSSRegistry(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.tool = getToolByName(self.portal, CSSTOOLNAME)
 
     def testToolExists(self):
@@ -46,9 +49,12 @@ class TestCSSRegistry(PloneTestCase.PloneTestCase):
                             cb)
 
 
-class TestJSRegistry(PloneTestCase.PloneTestCase):
+class TestJSRegistry(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.tool = getToolByName(self.portal, JSTOOLNAME)
 
     def testToolExists(self):

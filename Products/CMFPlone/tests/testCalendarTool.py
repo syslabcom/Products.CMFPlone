@@ -1,10 +1,19 @@
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+
 from DateTime import DateTime
-from Products.CMFPlone.tests import PloneTestCase
 
+class TestCalendarTool(CMFPloneTestCase):
 
-class TestCalendarTool(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-    def afterSetUp(self):
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
         self.calendar = self.portal.portal_calendar
         self.calendar.firstweekday = 0
         self.workflow = self.portal.portal_workflow
@@ -12,8 +21,9 @@ class TestCalendarTool(PloneTestCase.PloneTestCase):
         self.populateSite()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Event', 'event1')
+        self.workflow.setDefaultChain('plone_workflow')
         event1 = getattr(self.portal, 'event1')
         event1.edit(startDate=self.event_date, endDate=self.event_date)
         self.workflow.doActionFor(event1, 'publish', comment='testing')
@@ -23,7 +33,7 @@ class TestCalendarTool(PloneTestCase.PloneTestCase):
         event11 = getattr(self.portal.folder1, 'event11')
         event11.edit(startDate=self.event_date, endDate=self.event_date)
         self.workflow.doActionFor(event11, 'publish', comment='testing')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testGetEventsForCalendar(self):
         events = self.calendar.getEventsForCalendar(

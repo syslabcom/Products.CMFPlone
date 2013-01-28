@@ -1,12 +1,15 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFPlone.factory import _DEFAULT_PROFILE
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.factory import _DEFAULT_PROFILE
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestMigrationTool(PloneTestCase.PloneTestCase):
+class TestMigrationTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.migration = getToolByName(self.portal, "portal_migration")
         self.setup = getToolByName(self.portal, "portal_setup")
 
@@ -33,7 +36,7 @@ class TestMigrationTool(PloneTestCase.PloneTestCase):
         self.assertTrue(len(upgrades) == 0)
 
     def testDoUpgrades(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
         self.setup.setLastVersionForProfile(_DEFAULT_PROFILE, '2.5')
         upgrades = self.setup.listUpgrades(_DEFAULT_PROFILE)

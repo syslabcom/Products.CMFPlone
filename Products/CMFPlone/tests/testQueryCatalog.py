@@ -1,17 +1,18 @@
 # Test queryCatalog and plone search forms
 
-from zope.component import getMultiAdapter
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.ZCTextIndex.ParseTree import ParseError
-from Products.CMFPlone.interfaces.syndication import ISiteSyndicationSettings
 from plone.registry.interfaces import IRegistry
-from zope.component import getUtility
+from Products.CMFPlone.interfaces.syndication import ISiteSyndicationSettings
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.ZCTextIndex.ParseTree import ParseError
 from zExceptions import NotFound
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+
 import types
 
 
-class TestQueryCatalog(PloneTestCase.PloneTestCase):
+class TestQueryCatalog(CMFPloneTestCase):
     """Test queryCatalog script.
 
     Test function of queryCatalog script, **not** the
@@ -20,6 +21,11 @@ class TestQueryCatalog(PloneTestCase.PloneTestCase):
     returns the catalog search dictionary so we can examine what
     would be searched.
     """
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def dummyCatalog(self, REQUEST=None, **kw):
         return kw
@@ -107,7 +113,7 @@ class TestQueryCatalog(PloneTestCase.PloneTestCase):
         ntp.root = '/'
         qry = self.folder.queryCatalog(request, use_navigation_root=True)
         self.assertEquals('/'.join(self.portal.getPhysicalPath()), qry['path'])
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         self.portal.invokeFactory('Folder', 'foo')
         ntp.root = '/foo'
         qry = self.folder.queryCatalog(request, use_navigation_root=True)
@@ -117,14 +123,14 @@ class TestQueryCatalog(PloneTestCase.PloneTestCase):
     def testNavigationRootDoesNotOverrideExplicitPath(self):
         request = {'SearchableText': 'a*', 'path': '/yyy/zzz'}
         ntp = self.portal.portal_properties.navtree_properties
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         self.portal.invokeFactory('Folder', 'foo')
         ntp.root = '/foo'
         qry = self.folder.queryCatalog(request, use_navigation_root=True)
         self.assertEquals('/yyy/zzz', qry['path'])
 
 
-class TestQueryCatalogQuoting(PloneTestCase.PloneTestCase):
+class TestQueryCatalogQuoting(CMFPloneTestCase):
     """Test logic quoting features queryCatalog script.
 
     Test function of queryCatalog script, **not** the
@@ -133,6 +139,11 @@ class TestQueryCatalogQuoting(PloneTestCase.PloneTestCase):
     returns the catalog search dictionary so we can examine what
     would be searched.
     """
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def dummyCatalog(self, REQUEST=None, **kw):
         return kw
@@ -215,14 +226,17 @@ class TestQueryCatalogQuoting(PloneTestCase.PloneTestCase):
             expected)
 
 
-class TestQueryCatalogParseError(PloneTestCase.PloneTestCase):
+class TestQueryCatalogParseError(CMFPloneTestCase):
     """Checks that the queryCatalog script returns an empty result set
        in case of ZCTextIndex ParseErrors.
 
        This testcase uses the real catalog, not a stub.
     """
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder.invokeFactory('Document', id='doc', text='foo bar baz')
 
     def testSearchableText(self):
@@ -249,11 +263,13 @@ class TestQueryCatalogParseError(PloneTestCase.PloneTestCase):
         self.assertEqual(self.portal.queryCatalog(request), expected)
 
 
-AddPortalTopics = 'Add portal topics'
-
-
-class TestSearchForms(PloneTestCase.PloneTestCase):
+class TestSearchForms(CMFPloneTestCase):
     """Render all forms related to queryCatalog"""
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def testRenderSearchForm(self):
         searchView = getMultiAdapter((self.portal, self.app.REQUEST),

@@ -1,22 +1,42 @@
-from doctest import DocTestSuite, DocFileSuite
-from unittest import TestSuite
+from doctest import DocFileSuite
+from doctest import DocTestSuite
+from plone.testing import layered
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+import doctest
+import unittest
 
-from Products.CMFPlone.tests import PloneTestCase
-from Testing.ZopeTestCase import ZopeDocTestSuite
-
+OPTIONFLAGS = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
 def test_suite():
-    suites = (
-        DocFileSuite('messages.txt', package='Products.CMFPlone.tests'),
+    suite = unittest.TestSuite()
+    suite.addTests([
+
+        layered(DocFileSuite('mails.rst',
+                             package = 'Products.CMFPlone.tests',
+                             optionflags = OPTIONFLAGS),
+                layer = PLONE_TEST_CASE_INTEGRATION_TESTING),
+
+        layered(DocFileSuite('emaillogin.rst',
+                             package = 'Products.CMFPlone.tests',
+                             optionflags = OPTIONFLAGS),
+                layer = PLONE_TEST_CASE_INTEGRATION_TESTING),
+
+        layered(DocTestSuite('Products.CMFPlone.CatalogTool',
+                             optionflags = OPTIONFLAGS),
+                layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING),
+
+        layered(DocTestSuite('Products.CMFPlone.PloneTool',
+                             optionflags = OPTIONFLAGS),
+                layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING),
+
+        DocFileSuite('messages.rst',
+                     package='Products.CMFPlone.tests'),
         DocTestSuite('Products.CMFPlone.CalendarTool'),
-        ZopeDocTestSuite('Products.CMFPlone.CatalogTool',
-                         test_class=PloneTestCase.FunctionalTestCase),
         DocTestSuite('Products.CMFPlone.i18nl10n'),
-        ZopeDocTestSuite('Products.CMFPlone.PloneTool',
-                         test_class=PloneTestCase.FunctionalTestCase),
         DocTestSuite('Products.CMFPlone.TranslationServiceTool'),
         DocTestSuite('Products.CMFPlone.utils'),
         DocTestSuite('Products.CMFPlone.workflow'),
-        )
 
-    return TestSuite(suites)
+    ])
+    return suite

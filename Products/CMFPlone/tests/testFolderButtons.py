@@ -1,22 +1,29 @@
 from cStringIO import StringIO
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from plone.testing.z2 import installProduct
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.dummy import disallow_delete_handler
+from Products.CMFPlone.tests.dummy import ICantBeDeleted
+from Products.CMFPlone.tests.dummy import Item
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from zExceptions import Forbidden
-from zope.interface import directlyProvides
 from zope import component
 from zope.container.interfaces import IObjectRemovedEvent
-from Products.CMFPlone.tests import PloneTestCase
-from Products.PloneTestCase.setup import default_user
-from Products.PloneTestCase.setup import default_password
-from Products.CMFPlone.tests.dummy import Item, ICantBeDeleted, \
-                                          disallow_delete_handler
+from zope.interface import directlyProvides
+
 import transaction
 
-PloneTestCase.installProduct('SiteAccess', quiet=1)
 
-
-class TestFolderRename(PloneTestCase.PloneTestCase):
+class TestFolderRename(CMFPloneTestCase):
     # Tests for folder_rename and folder_rename_form
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        installProduct(self.app, 'SiteAccess', quiet=1)
         self.catalog = self.portal.portal_catalog
         self.folder.invokeFactory('Folder', id='foo')
         self.folder.invokeFactory('Folder', id='bar')
@@ -106,10 +113,13 @@ class TestFolderRename(PloneTestCase.PloneTestCase):
             len(self.folder.getObjectsFromPathList([doc1_path, doc2_path])), 2)
 
 
-class TestFolderDelete(PloneTestCase.PloneTestCase):
+class TestFolderDelete(CMFPloneTestCase):
     # Tests for folder_delete.py
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.catalog = self.portal.portal_catalog
         self.folder.invokeFactory('Folder', id='foo')
         self.folder.invokeFactory('Folder', id='bar')
@@ -182,11 +192,14 @@ class TestFolderDelete(PloneTestCase.PloneTestCase):
         self.assertRaises(Forbidden, self.folder.folder_delete)
 
 
-class TestFolderPublish(PloneTestCase.PloneTestCase):
+class TestFolderPublish(CMFPloneTestCase):
     # Tests for folder_publish and content_status_history and
     # content_status_modify
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.catalog = self.portal.portal_catalog
         self.wtool = self.portal.portal_workflow
         self.folder.invokeFactory('Folder', id='foo')
@@ -281,8 +294,10 @@ class TestFolderPublish(PloneTestCase.PloneTestCase):
                           'publish', paths=['bogus'])
 
 
-class TestFolderCutCopy(PloneTestCase.PloneTestCase):
+class TestFolderCutCopy(CMFPloneTestCase):
     # Tests for folder_cut.py and folder_copy.py
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def testCutNoErrorOnBadPaths(self):
         # Ensure we don't fail on a bad path
@@ -295,10 +310,13 @@ class TestFolderCutCopy(PloneTestCase.PloneTestCase):
         self.folder.folder_copy()
 
 
-class TestObjectActions(PloneTestCase.FunctionalTestCase):
+class TestObjectActions(CMFPloneTestCase):
 
-    def afterSetUp(self):
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
 
     def assertStatusEqual(self, a, b, msg=''):
         if a != b:

@@ -1,11 +1,4 @@
-from Testing import ZopeTestCase
-
-from types import TupleType, TypeType, ClassType
-from zope.interface.interface import InterfaceClass
 from ExtensionClass import ExtensionClass
-
-from zope.interface import implementedBy, providedBy
-
 from Products.CMFPlone.ActionIconsTool import ActionIconsTool
 from Products.CMFPlone.ActionsTool import ActionsTool
 from Products.CMFPlone.CalendarTool import CalendarTool
@@ -15,14 +8,15 @@ from Products.CMFPlone.FactoryTool import FactoryTool, TempFolder
 from Products.CMFPlone.InterfaceTool import InterfaceTool
 from Products.CMFPlone.MetadataTool import MetadataTool
 from Products.CMFPlone.MigrationTool import MigrationTool
-from Products.CMFPlone.PloneControlPanel \
-    import PloneControlPanel, PloneConfiglet
-from Products.CMFPlone.PloneFolder \
-    import OrderedContainer, BasePloneFolder, PloneFolder
+from Products.CMFPlone.PloneControlPanel import PloneConfiglet
+from Products.CMFPlone.PloneControlPanel import PloneControlPanel
+from Products.CMFPlone.PloneFolder import BasePloneFolder
+from Products.CMFPlone.PloneFolder import OrderedContainer
+from Products.CMFPlone.PloneFolder import PloneFolder
 from Products.CMFPlone.PloneTool import PloneTool
 from Products.CMFPlone.Portal import PloneSite
-from Products.CMFPlone.PropertiesTool \
-    import PropertiesTool, SimpleItemWithProperties
+from Products.CMFPlone.PropertiesTool import PropertiesTool
+from Products.CMFPlone.PropertiesTool import SimpleItemWithProperties
 from Products.CMFPlone.QuickInstallerTool import QuickInstallerTool
 from Products.CMFPlone.RegistrationTool import RegistrationTool
 from Products.CMFPlone.SkinsTool import SkinsTool
@@ -31,6 +25,10 @@ from Products.CMFPlone.TypesTool import TypesTool
 from Products.CMFPlone.UndoTool import UndoTool
 from Products.CMFPlone.URLTool import URLTool
 from Products.CMFPlone.WorkflowTool import WorkflowTool
+from Testing import ZopeTestCase
+from types import TupleType, TypeType, ClassType
+from zope.interface import implementedBy, providedBy
+from zope.interface.interface import InterfaceClass
 
 
 def className(klass):

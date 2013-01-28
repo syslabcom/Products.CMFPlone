@@ -1,11 +1,10 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFPlone.tests import dummy
-from Products.CMFPlone.tests.PloneTestCase import default_user
-from Products.CMFPlone.tests.PloneTestCase import default_password
-
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
 from Products.CMFCore.utils import getToolByName
-
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from StringIO import StringIO
 
 html = """\
@@ -16,7 +15,9 @@ html = """\
 """
 
 
-class TestDAVProperties(PloneTestCase.PloneTestCase):
+class TestDAVProperties(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def testPropertiesToolTitle(self):
         ptool = getToolByName(self.portal, 'portal_properties')
@@ -28,12 +29,15 @@ class TestDAVProperties(PloneTestCase.PloneTestCase):
         self.assertEquals(items['displayname'], ptool.title)
 
 
-class TestDAVMetadata(PloneTestCase.FunctionalTestCase):
+class TestDAVMetadata(CMFPloneTestCase):
     # Confirms fix for http://dev.plone.org/plone/ticket/3217
     # The fix itself is in CMFDefault.Document, not Plone.
 
-    def afterSetUp(self):
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         self.folder_path = self.folder.absolute_url(1)
 
     def testDocumentMetadata(self):
@@ -57,12 +61,15 @@ class TestDAVMetadata(PloneTestCase.FunctionalTestCase):
         self.assertEqual(doc.Rights(), '')
 
 
-class TestPUTObjects(PloneTestCase.FunctionalTestCase):
+class TestPUTObjects(CMFPloneTestCase):
     # PUT objects into Plone including special cases like index_html.
     # Confirms fix for http://dev.plone.org/plone/ticket/1375
 
-    def afterSetUp(self):
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         self.portal_path = self.portal.absolute_url(1)
         self.folder_path = self.folder.absolute_url(1)
 
@@ -258,7 +265,7 @@ class TestPUTObjects(PloneTestCase.FunctionalTestCase):
 
     def testPUTDocumentIntoPortal(self):
         # Create a new document in the portal via FTP/DAV
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
         response = self.publish(self.portal_path + '/new_html',
                                 env={'CONTENT_TYPE': 'text/html'},
@@ -273,7 +280,7 @@ class TestPUTObjects(PloneTestCase.FunctionalTestCase):
 
     def testPUTIndexHtmlDocumentIntoPortal(self):
         # Create an index_html document in the portal via FTP/DAV
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
         response = self.publish(self.portal_path + '/index_html',
                                 env={'CONTENT_TYPE': 'text/html'},
@@ -288,12 +295,15 @@ class TestPUTObjects(PloneTestCase.FunctionalTestCase):
         self.assertEqual(self.portal._getOb('index_html').EditableBody(), html)
 
 
-class TestDAVOperations(PloneTestCase.FunctionalTestCase):
+class TestDAVOperations(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.loginAsPortalOwner()
-        self.basic_auth = '%s:%s' % (PloneTestCase.portal_owner,
-                                     PloneTestCase.default_password)
+        self.basic_auth = '%s:%s' % ('admin',
+                                     TEST_USER_PASSWORD)
         self.portal_path = self.portal.absolute_url(1)
         self.folder_path = self.folder.absolute_url(1)
 

@@ -1,15 +1,20 @@
-from Products.CMFPlone.tests import PloneTestCase
 from plone.app.layout.nextprevious.interfaces import INextPreviousProvider
+from plone.app.testing import TEST_USER_ID
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestNextPrevious(PloneTestCase.PloneTestCase):
+class TestNextPrevious(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.populateSite()
 
     #set up a lot of content - can be reused in each (sub)test
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Document', 'doc1')
         self.portal.invokeFactory('Document', 'doc2')
         self.portal.invokeFactory('Document', 'doc3')
@@ -27,7 +32,7 @@ class TestNextPrevious(PloneTestCase.PloneTestCase):
         folder2.invokeFactory('Document', 'doc22')
         folder2.invokeFactory('Document', 'doc23')
         folder2.invokeFactory('File', 'file21')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, self.portal, TEST_USER_ID, ['Member'])
 
     def testIfFolderImplementsPreviousNext(self):
         self.folder.invokeFactory('Folder', 'case')

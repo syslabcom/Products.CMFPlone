@@ -1,20 +1,36 @@
-import re
-import unittest
-from urllib import urlencode
+from plone.app.testing import setRoles
+from plone.app.testing import SITE_OWNER_NAME
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from plone.app.testing import login
+from plone.app.testing import logout
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneFunctionalTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from Testing.makerequest import makerequest
-from Products.PloneTestCase import PloneTestCase as ptc
-from Products.Five.testbrowser import Browser
+from urllib import urlencode
 from zExceptions import Unauthorized
 
-ptc.setupPloneSite()
+import re
+import transaction
 
+#To ensure that the patches are loaded before the test infrastructure
+import Products.CMFPlone.patches.security 
 
-class TestAttackVectorsUnit(unittest.TestCase):
-    
+class TestAttackVectorsUnit(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
+
     def test_gtbn_funcglobals(self):
         from Products.CMFPlone.utils import getToolByName
         try:
-            getToolByName(self.assertTrue,'func_globals')['__builtins__']
+            getToolByName(self.assertTrue, 'func_globals')['__builtins__']
         except TypeError:
             pass
         else:
@@ -42,7 +58,7 @@ Products.PlacelessTranslationService.allow_module('os')
         script._filepath = 'script'
         script.write(src)
         self.assertRaises((ImportError, Unauthorized), script)
-    
+
     def test_PT_allow_module_not_available_in_RestrictedPython_2(self):
         src = '''
 from Products.PlacelessTranslationService import allow_module
@@ -59,23 +75,32 @@ allow_module('os')
         self.assertFalse(hasattr(App.Undo.UndoSupport, 'get_request_var_or_attr'))
 
 
-class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
-    
+class TestAttackVectorsFunctional(CMFPloneFunctionalTestCase):
+
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
     def test_widget_traversal_1(self):
-        res = self.publish('/plone/@@discussion-settings/++widget++moderator_email')
+        res = self.publish(
+            '/plone/@@discussion-settings/++widget++moderator_email')
         self.assertEqual(302, res.status)
-        self.assertTrue(res.headers['location'].startswith('http://nohost/plone/acl_users/credentials_cookie_auth/require_login'))
+        self.assertTrue(res.headers['location'].startswith(
+            'http://nohost/plone/acl_users/' 
+            'credentials_cookie_auth/require_login'))
 
     def test_widget_traversal_2(self):
-        res = self.publish('/plone/@@discussion-settings/++widget++captcha/terms/field/interface/setTaggedValue?tag=cake&value=lovely')
+        res = self.publish(
+            '/plone/@@discussion-settings/++widget++captcha/terms/'
+            'field/interface/setTaggedValue?tag=cake&value=lovely')
         self.assertEqual(302, res.status)
-        self.assertTrue(res.headers['location'].startswith('http://nohost/plone/acl_users/credentials_cookie_auth/require_login'))
-    
+        self.assertTrue(res.headers['location'].startswith(
+            'http://nohost/plone/acl_users/'
+            'credentials_cookie_auth/require_login'))
+
     def test_registerConfiglet_1(self):
         VECTOR = "/plone/portal_controlpanel/registerConfiglet?id=cake&name=Cakey&action=woo&permission=View&icon_expr="
         res = self.publish(VECTOR)
         self.assertTrue(res.headers['location'].startswith('http://nohost/plone/acl_users/credentials_cookie_auth/require_login'))
-    
+
     def test_registerConfiglet_2(self):
         VECTOR = "/plone/portal_controlpanel/registerConfiglet?id=cake&name=Cakey&action=woo&permission=View&icon_expr="
         self.publish(VECTOR)
@@ -89,26 +114,31 @@ class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
         if m:
             return m.group(1)
         return ''
-    
+
     def test_renameObjectsByPaths(self):
         PAYLOAD = {
             'paths:list': '/plone/news',
             # id must stay the same
             'new_ids:list': 'news',
             'new_titles:list': 'EVIL',
-            # Set orig_template to 'view'. Otherwise folder_rename "success" redirects
+            # Set orig_template to 'view'. 
+            # Otherwise folder_rename "success" redirects
             # to folder_contents, which will raise Unauthorized.
             'orig_template': 'view',
         }
 
-        browser = Browser()
-        csrf_token = self._get_authenticator()
+        transaction.commit()
+        browser = self.getBrowser()
+        csrf_token = self.getAuthenticator()
+        transaction.commit()
 
         PAYLOAD['_authenticator'] = csrf_token
         # Call folder_rename anywhere
         browser.open('http://nohost/plone/folder_rename',
             urlencode(PAYLOAD))
-        self.assertTrue('The following item(s) could not be renamed: /plone/news.' in browser.contents)
+        self.assertTrue(
+            'The following item(s) could not be renamed: /plone/news.' 
+                in browser.contents)
         self.assertEqual('News', self.portal.news.Title())
 
     def test_renameObjectByPaths_postonly(self):
@@ -118,25 +148,35 @@ class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
         src = """context.plone_utils.renameObjectsByPaths(paths=['/plone/news'], new_ids=['news'], new_titles=['EVIL'], REQUEST=context.REQUEST)"""
         script.write(src)
         self.portal.evil = script
-        csrf_token = self._get_authenticator()
+        csrf_token = self.getAuthenticator()
 
         self.publish('/plone/evil', extra={'_authenticator': csrf_token}, request_method='POST')
         self.assertEqual('News', self.portal.news.Title())
 
-        owner_basic = ptc.portal_owner + ':' + ptc.default_password
-        csrf_token = self._get_authenticator(owner_basic)
-        self.publish('/plone/evil', extra={'_authenticator': csrf_token}, basic=owner_basic)
+        login(self.portal.aq_parent, SITE_OWNER_NAME)
+        csrf_token = self.getAuthenticator()
+        logout()
+        login(self.portal, TEST_USER_NAME)
+        owner_basic = SITE_OWNER_NAME + ':' + TEST_USER_PASSWORD
+        self.publish(
+            '/plone/evil', 
+            extra={'_authenticator': csrf_token}, 
+            basic=owner_basic)
         self.assertEqual('News', self.portal.news.Title())
-        self.publish('/plone/evil', request_method='POST', extra={'_authenticator': csrf_token}, basic=owner_basic)
+        self.publish(
+            '/plone/evil', 
+            request_method='POST', 
+            extra={'_authenticator': csrf_token}, 
+            basic=owner_basic)
         self.assertEqual('EVIL', self.portal.news.Title())
 
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.news.setTitle('News')
         self.portal.plone_utils.renameObjectsByPaths(paths=['/plone/news'], new_ids=['news'], new_titles=['EVIL'])
         self.assertEqual('EVIL', self.portal.news.Title())
         self.portal.news.setTitle('News')
-        
-        self.setRoles(['Member'])
+
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         self.portal.plone_utils.renameObjectsByPaths(paths=['/plone/news'], new_ids=['news'], new_titles=['EVIL'])
         self.assertEqual('News', self.portal.news.Title())
 
@@ -158,14 +198,14 @@ class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
     def test_queryCatalog(self):
         res = self.publish('/plone/news/aggregator/queryCatalog')
         self.assertEqual(404, res.status)
-    
+
     def test_resolve_url(self):
         res = self.publish("/plone/uid_catalog/resolve_url?path=/evil")
         self.assertEqual(302, res.status)
         self.assertTrue(res.headers['location'].startswith('http://nohost/plone/acl_users/credentials_cookie_auth/require_login'))
 
     def test_at_download(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.portal_workflow.setChainForPortalTypes(['File'], 'plone_workflow')
         self.portal.invokeFactory('File', 'test')
         self.portal.portal_workflow.doActionFor(self.portal.test, 'publish')
@@ -179,14 +219,16 @@ class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
         self.assertTrue(res.headers['location'].startswith('http://nohost/plone/acl_users/credentials_cookie_auth/require_login'))
 
     def test_ftp(self):
-        self.setRoles(['Manager', 'Owner'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Owner'])
         self.portal.REQUEST.PARENTS = [self.app]
         res = self.portal.news.manage_FTPlist(self.portal.REQUEST)
         self.assertTrue(isinstance(res, basestring))
+        self.portal.portal_workflow.doActionFor(self.portal.news, 'reject')
         self.portal.portal_workflow.doActionFor(self.portal.news, 'hide')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         from zExceptions import Unauthorized
-        self.assertRaises(Unauthorized, self.portal.news.manage_FTPlist, self.portal.REQUEST)
+        self.assertRaises(
+            Unauthorized, self.portal.news.manage_FTPlist, self.portal.REQUEST)
 
     def test_atat_does_not_return_anything(self):
         res = self.publish('/plone/@@')
@@ -194,7 +236,7 @@ class TestAttackVectorsFunctional(ptc.FunctionalTestCase):
 
     def test_go_back(self):
         res = self.publish('/plone/front-page/go_back?last_referer=http://${request}',
-            basic=ptc.portal_owner + ':' + ptc.default_password)
+            basic = SITE_OWNER_NAME + ':' + TEST_USER_PASSWORD)
         self.assertEqual(302, res.status)
         self.assertEqual('http://${request}', res.headers['location'][:17])
 

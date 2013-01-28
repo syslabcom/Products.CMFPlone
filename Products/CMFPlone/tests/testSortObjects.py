@@ -1,12 +1,16 @@
 # Tests the sortObjects script
 
-from Products.CMFPlone.tests import PloneTestCase
 from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestSortObjects(PloneTestCase.PloneTestCase):
+class TestSortObjects(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.items = [
             dummy.Item('d', 'fred'),
             dummy.Item('c', 'wilma'),

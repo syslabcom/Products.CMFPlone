@@ -2,11 +2,17 @@
 # Test the getObjSize script
 #
 
-from Products.CMFPlone.tests import PloneTestCase
 from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestGetObjSize(PloneTestCase.PloneTestCase):
+class TestGetObjSize(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def testZeroInt(self):
         self.assertEqual(self.portal.getObjSize(None, 0), "0 KB")
@@ -48,9 +54,12 @@ class TestGetObjSize(PloneTestCase.PloneTestCase):
         self.assertEqual(self.portal.getObjSize(None, 'barney'), 'barney')
 
 
-class TestGetObjSizedItem(PloneTestCase.PloneTestCase):
+class TestGetObjSizedItem(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.ob = dummy.SizedItem()
 
     def testZero(self):

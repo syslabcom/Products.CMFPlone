@@ -1,15 +1,18 @@
 # logged_in.cpy tests
 
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFCore.permissions import SetOwnProperties
 from DateTime import DateTime
+from Products.CMFCore.permissions import SetOwnProperties
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from time import sleep
 
 
-class TestLogin(PloneTestCase.PloneTestCase):
+class TestLogin(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.membership = self.portal.portal_membership
         self.membership.addMember('member', 'secret', ['Member'], [])
         self.login('member')

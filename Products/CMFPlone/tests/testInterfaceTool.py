@@ -1,14 +1,12 @@
-import unittest
-
+from Products.CMFCore.interfaces import IContentish
+from Products.CMFCore.interfaces import IDublinCore
+from Products.CMFCore.PortalContent import PortalContent
+from Products.CMFDefault.Document import Document
+from Products.CMFDefault.DublinCore import DefaultDublinCoreImpl
+from Products.CMFPlone.InterfaceTool import resolveInterface, getDottedName
 from zope.interface import implements
 
-from Products.CMFCore.interfaces import IDublinCore
-from Products.CMFCore.interfaces import IContentish
-from Products.CMFCore.PortalContent import PortalContent
-from Products.CMFDefault.DublinCore import DefaultDublinCoreImpl
-from Products.CMFDefault.Document import Document
-
-from Products.CMFPlone.InterfaceTool import resolveInterface, getDottedName
+import unittest
 
 
 class IMyPortalContent(IContentish):

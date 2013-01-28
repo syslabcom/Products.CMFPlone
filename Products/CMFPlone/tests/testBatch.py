@@ -1,10 +1,15 @@
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from Products.CMFPlone.PloneBatch import Batch
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from Products.ZCatalog.Lazy import LazyMap
 
-from Products.CMFPlone.PloneBatch import Batch
-from Products.CMFPlone.tests import PloneTestCase
+class TestBatch(CMFPloneTestCase):
 
-
-class TestBatch(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def test_batch_no_lazy(self):
         batch = Batch(range(100), size=10, start=10)
@@ -33,13 +38,14 @@ class TestBatch(PloneTestCase.PloneTestCase):
         self.assertEqual(batch.nexturls({}), [(10, 'b_start:int=90')])
 
     def test_batch_brains(self):
-        self.loginAsPortalOwner()
-        portal = self.portal
+        portal = self.layer['portal']
+        login(portal, TEST_USER_NAME)
+        setRoles(portal, TEST_USER_ID, ['Manager'])
 
-        for obj_id in ['%stest' % chr(c) for c in range(97, 123)]:
+        for obj_id in ['AAA%stest' % chr(c) for c in range(97, 123)]:
             portal.invokeFactory('Document', obj_id)
 
         brains = portal.portal_catalog.searchResults(portal_type='Document',
                                                      sort_on='id')
         batch = Batch(brains, size=10, start=10)
-        self.assertEqual(batch[0].id, 'jtest')
+        self.assertEqual(batch[0].id, 'AAAktest')

@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-import unittest
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFPlone.UnicodeSplitter import Splitter
-from Products.CMFPlone.UnicodeSplitter import CaseNormalizer
-
-from Products.CMFCore.utils import getToolByName
-from Products.CMFCore.tests.base.dummy import DummyContent
 
 from OFS.metaconfigure import setDeprecatedManageAddDelete
+from Products.CMFCore.tests.base.dummy import DummyContent
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.UnicodeSplitter import CaseNormalizer
+from Products.CMFPlone.UnicodeSplitter import Splitter
 
 import locale
+
 LATIN1 = ('en_US.ISO-8859-1', 'en_US.ISO8859-15', 'en_GB.ISO8859-15',
           'de_DE@euro', 'fr_FR@euro', 'nl_NL@euro')
 
@@ -28,9 +27,12 @@ def _setlocale(*names):
     return saved
 
 
-class TestSplitter(unittest.TestCase):
+class TestSplitter(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.splitter = Splitter()
         self.process = self.splitter.process
         self.processGlob = self.splitter.processGlob
@@ -97,9 +99,12 @@ class TestSplitter(unittest.TestCase):
             _setlocale(saved)
 
 
-class TestCaseNormalizer(unittest.TestCase):
+class TestCaseNormalizer(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.normalizer = CaseNormalizer()
         self.process = self.normalizer.process
 
@@ -129,9 +134,12 @@ class TestCaseNormalizer(unittest.TestCase):
             _setlocale(saved)
 
 
-class TestQuery(PloneTestCase.PloneTestCase):
+class TestQuery(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         setDeprecatedManageAddDelete(DummyContent)
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.folder._setObject('doc1',
@@ -244,7 +252,9 @@ from Products.CMFPlone.UnicodeSplitter \
      process_unicode, process_unicode_glob
 
 
-class TestBigramFunctions(unittest.TestCase):
+class TestBigramFunctions(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def test_process_str(self):
         lsts = [
@@ -305,12 +315,15 @@ class TestBigramFunctions(unittest.TestCase):
             self.assertEqual(rst, process_str_post(lst, enc))
 
 
-class TestSearchingJapanese(PloneTestCase.PloneTestCase):
+class TestSearchingJapanese(CMFPloneTestCase):
     """Install Japanese test
     """
 
-    def afterSetUp(self):
-        self.setRoles(('Manager', ))
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        setRoles(self.portal, TEST_USER_ID, ('Manager', ))
         self.portal.invokeFactory('Document', 'doc1')
         self.doc1 = getattr(self.portal, 'doc1')
         self.doc1.setTitle("Ploneは素晴らしい。")
@@ -336,10 +349,14 @@ class TestSearchingJapanese(PloneTestCase.PloneTestCase):
         self.assertEqual(len(items2), 0)
 
 
-class TestSearchingUnicodeJapanese(PloneTestCase.PloneTestCase):
+class TestSearchingUnicodeJapanese(CMFPloneTestCase):
     """ Install Unicode Japanese test """
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         self.portal.invokeFactory('Document', 'doc1')
         self.doc1 = getattr(self.portal, 'doc1')
         self.doc1.setTitle(u"Ploneは素晴らしい。")

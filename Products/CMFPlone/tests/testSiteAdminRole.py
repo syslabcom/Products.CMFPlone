@@ -1,13 +1,18 @@
-import pkg_resources
-from Testing import ZopeTestCase as ztc
 from AccessControl.PermissionRole import rolesForPermissionOn
-from Products.CMFPlone.tests import PloneTestCase
+from plone.testing.z2 import installProduct
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
-# without this some permissions don't get initialized
-ztc.installProduct('Transience')
+import pkg_resources
 
+class TestSiteAdministratorRole(CMFPloneTestCase):
 
-class TestSiteAdministratorRole(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        # without this some permissions don't get initialized
+        installProduct(self.app, 'Transcience')
 
     def testExpectedPermissions(self):
         # This integration test shows that the correct permissions were
@@ -210,9 +215,10 @@ class TestSiteAdministratorRole(PloneTestCase.PloneTestCase):
                 'Kupu: Manage libraries':                               1,
                 'Kupu: Query libraries':                                1,
             })
+
         try:
-            import plone.app.iterate
-        except ImportError:
+            pkg_resources.get_distribution('plone.app.iterate')
+        except pkg_resources.DistributionNotFound:
             pass
         else:
             expected.update({

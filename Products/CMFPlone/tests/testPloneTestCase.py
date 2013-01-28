@@ -1,13 +1,17 @@
 # Example PloneTestCase
 
-from Products.CMFPlone.tests import PloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 from Acquisition import aq_base
 
 
-class TestPloneTestCase(PloneTestCase.PloneTestCase):
+class TestPloneTestCase(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.catalog = self.portal.portal_catalog
         self.workflow = self.portal.portal_workflow
         self.setupAuthenticator()
@@ -20,7 +24,7 @@ class TestPloneTestCase(PloneTestCase.PloneTestCase):
 
     def testPublishDocument(self):
         self.folder.invokeFactory('Document', id='new')
-        self.setRoles(['Reviewer'])
+        setRoles(self.portal, TEST_USER_ID, ['Reviewer'])
         self.workflow.doActionFor(self.folder.new, 'publish')
         self.assertEqual(
                 self.workflow.getInfoFor(self.folder.new, 'review_state'),
@@ -29,12 +33,12 @@ class TestPloneTestCase(PloneTestCase.PloneTestCase):
 
     def testRetractDocument(self):
         self.folder.invokeFactory('Document', id='new')
-        self.setRoles(['Reviewer'])
+        setRoles(self.portal, TEST_USER_ID, ['Reviewer'])
         self.workflow.doActionFor(self.folder.new, 'publish')
         self.assertEqual(
                 self.workflow.getInfoFor(self.folder.new, 'review_state'),
                 'published')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         self.workflow.doActionFor(self.folder.new, 'retract')
         self.assertEqual(
                 self.workflow.getInfoFor(self.folder.new, 'review_state'),

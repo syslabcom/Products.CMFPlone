@@ -8,13 +8,11 @@
 # root. Rolling back the abovementioned checkin restores functionality.
 #
 
-from Products.CMFPlone.tests import PloneTestCase
-
-PloneTestCase.installProduct('PythonScripts')
-
-from App.class_init import InitializeClass
 from AccessControl import ClassSecurityInfo
+from App.class_init import InitializeClass
 from OFS.SimpleItem import SimpleItem
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
 class AllowedItem(SimpleItem):
@@ -24,7 +22,6 @@ class AllowedItem(SimpleItem):
 
 InitializeClass(AllowedItem)
 
-
 class DeniedItem(SimpleItem):
     id = 'denied'
     security = ClassSecurityInfo()
@@ -33,12 +30,14 @@ class DeniedItem(SimpleItem):
 InitializeClass(DeniedItem)
 
 
-class BrokenAcquisitionTest(PloneTestCase.PloneTestCase):
+class BrokenAcquisitionTest(CMFPloneTestCase):
 
-    def afterSetUp(self):
-        self.folder = self.portal
-        self.folder._setObject('allowed', AllowedItem())
-        self.folder._setObject('denied', DeniedItem())
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.portal.folder._setObject('allowed', AllowedItem())
+        self.portal.folder._setObject('denied', DeniedItem())
 
     def _makePS(self, context, id, params, body):
         factory = context.manage_addProduct['PythonScripts']
@@ -47,11 +46,11 @@ class BrokenAcquisitionTest(PloneTestCase.PloneTestCase):
         ps.ZPythonScript_edit(params, body)
 
     def testAcquisitionAllowed(self):
-        self._makePS(self.folder, 'ps', '', 'print context.portal_membership')
-        self.folder.allowed.ps()
+        self._makePS(self.portal.folder, 'ps', '', 'print context.portal_membership')
+        self.portal.folder.allowed.ps()
 
     def testAcquisitionDenied(self):
         # This test fails in Zope 2.7.3
         # Also see http://zope.org/Collectors/CMF/259
-        self._makePS(self.folder, 'ps', '', 'print context.portal_membership')
-        self.folder.denied.ps()
+        self._makePS(self.portal.folder, 'ps', '', 'print context.portal_membership')
+        self.portal.folder.denied.ps()

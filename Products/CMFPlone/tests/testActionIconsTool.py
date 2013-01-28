@@ -1,11 +1,13 @@
-from Products.CMFPlone.tests import PloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
+class TestActionIconsTool(CMFPloneTestCase):
 
-class TestActionIconsTool(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-    def afterSetUp(self):
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.actionicons = self.portal.portal_actionicons
-        self._refreshSkinData()
 
     def testAddActionIcon(self):
         length = len(self.actionicons.listActionIcons())

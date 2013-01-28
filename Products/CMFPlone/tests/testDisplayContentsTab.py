@@ -1,19 +1,18 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFCore.permissions import ListFolderContents
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import AddPortalContent
-from Products.CMFCore.permissions import ReviewPortalContent
 from AccessControl.Permissions import copy_or_move
 from AccessControl.Permissions import delete_objects
+from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import ListFolderContents
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 import transaction
-
 
 # XXX: This is done in the PloneView now, and perhaps these tests should be
 # moved there.  We will leave the script around for a while, so we still test
 # there for now.
-class TestDisplayContentsTab(PloneTestCase.PloneTestCase):
+class TestDisplayContentsTab(CMFPloneTestCase):
     """For the contents tab to display a user must have the ListFolderContents,
        and one of the (Modify portal contents, Copy or move, Add portal
        contents, Delete objects) permissions either on the object itself, or on
@@ -21,17 +20,20 @@ class TestDisplayContentsTab(PloneTestCase.PloneTestCase):
        for its parent.
     """
 
-    def afterSetUp(self):
-        self.parent = self.folder.aq_parent
-        self.folder.invokeFactory('Folder', id='foo')
-        self.folder.foo.invokeFactory('Document', id='doc1')
-        self.folder.foo.invokeFactory('Folder', id='folder1')
-        folder_path = '/'.join(self.folder.foo.folder1.getPhysicalPath())
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.parent = self.portal.folder.aq_parent
+        self.portal.folder.invokeFactory('Folder', id='foo')
+        self.portal.folder.foo.invokeFactory('Document', id='doc1')
+        self.portal.folder.foo.invokeFactory('Folder', id='folder1')
+        folder_path = '/'.join(self.portal.folder.foo.folder1.getPhysicalPath())
         transaction.savepoint(optimistic=True)  # make rename work
         # Make the folder the default page
         self.setupAuthenticator()
         self.setRequestMethod('POST')
-        self.folder.folder_rename(paths=[folder_path], new_ids=['index_html'],
+        self.portal.folder.folder_rename(paths=[folder_path], new_ids=['index_html'],
                                   new_titles=['Default Folderish Document'])
         self.setRequestMethod('GET')
 
@@ -48,67 +50,67 @@ class TestDisplayContentsTab(PloneTestCase.PloneTestCase):
 
     def testDisplayContentsTab(self):
         # We should see the tab
-        self.assertTrue(self.folder.displayContentsTab())
+        self.assertTrue(self.portal.folder.displayContentsTab())
 
     def testAnonymous(self):
         # Anonymous should not see the tab
         self.logout()
-        self.assertFalse(self.folder.displayContentsTab())
+        self.assertFalse(self.portal.folder.displayContentsTab())
 
     def testNoListPermission(self):
         # We should not see the tab without ListFolderContents
-        self.folder.manage_permission(ListFolderContents, ['Manager'],
+        self.portal.folder.manage_permission(ListFolderContents, ['Manager'],
                                       acquire=0)
-        self.assertFalse(self.folder.displayContentsTab())
+        self.assertFalse(self.portal.folder.displayContentsTab())
 
     def testNoModificationPermissions(self):
         # We should see the tab with only copy_or_move
         perms = self.getModificationPermissions()
-        self.removePermissionsFromObject(perms, self.folder)
-        self.assertFalse(self.folder.displayContentsTab())
+        self.removePermissionsFromObject(perms, self.portal.folder)
+        self.assertFalse(self.portal.folder.displayContentsTab())
 
     def testOnlyModifyPermission(self):
         # We should see the tab with only ModifyPortalContent
         perms = self.getModificationPermissions()
         perms.remove(ModifyPortalContent)
-        self.removePermissionsFromObject(perms, self.folder)
-        self.assertTrue(self.folder.displayContentsTab())
+        self.removePermissionsFromObject(perms, self.portal.folder)
+        self.assertTrue(self.portal.folder.displayContentsTab())
 
     def testOnlyCopyPermission(self):
         # We should NOT see the tab with only copy_or_move (r8620)
         # Otherwise Members always get the green border.
         perms = self.getModificationPermissions()
         perms.remove(copy_or_move)
-        self.removePermissionsFromObject(perms, self.folder)
-        self.assertFalse(self.folder.displayContentsTab())
+        self.removePermissionsFromObject(perms, self.portal.folder)
+        self.assertFalse(self.portal.folder.displayContentsTab())
 
     def testOnlyDeletePermission(self):
         # We should see the tab with only copy_or_move
         perms = self.getModificationPermissions()
         perms.remove(delete_objects)
-        self.removePermissionsFromObject(perms, self.folder)
-        self.assertTrue(self.folder.displayContentsTab())
+        self.removePermissionsFromObject(perms, self.portal.folder)
+        self.assertTrue(self.portal.folder.displayContentsTab())
 
     def testOnlyAddPermission(self):
         # We should see the tab with only copy_or_move
         perms = self.getModificationPermissions()
         perms.remove(AddPortalContent)
-        self.removePermissionsFromObject(perms, self.folder)
-        self.assertTrue(self.folder.displayContentsTab())
+        self.removePermissionsFromObject(perms, self.portal.folder)
+        self.assertTrue(self.portal.folder.displayContentsTab())
 
     def testNonFolderishObjectDoesNotShowTab(self):
         # The availability of the contents tab on a non-folderish object should
         # be based on the parents permissions.
-        doc = self.folder.foo.doc1
+        doc = self.portal.folder.foo.doc1
         self.assertFalse(doc.displayContentsTab())
 
     def testFolderishDefaultPageUsesParentPermissions(self):
         # The availability of the contents tab on a default page should be
         # based on the parents permissions, whether the default page is
         # folderish or not.
-        def_page = self.folder.foo.index_html
+        def_page = self.portal.folder.foo.index_html
         self.assertTrue(def_page.displayContentsTab())
-        self.folder.foo.manage_permission(ListFolderContents, ['Manager'],
+        self.portal.folder.foo.manage_permission(ListFolderContents, ['Manager'],
                                           acquire=0)
         # Clear the memoized results, as it would happen for a new request
         del self.app.REQUEST.__annotations__

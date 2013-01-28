@@ -1,12 +1,16 @@
 # Test toLocalizedTime script and TranslationServiceTool.
 
-from Products.CMFPlone.tests import PloneTestCase
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestUTranslate(PloneTestCase.PloneTestCase):
+class TestUTranslate(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.tool = getToolByName(self.portal, 'translation_service')
 
     def testUTranslate(self):
@@ -31,9 +35,12 @@ class TestUTranslate(PloneTestCase.PloneTestCase):
         self.assertEquals(value, u'foo')
 
 
-class TestTranslationServiceTool(PloneTestCase.PloneTestCase):
+class TestTranslationServiceTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.tool = getToolByName(self.portal, 'translation_service')
 
     def testLocalized_time(self):

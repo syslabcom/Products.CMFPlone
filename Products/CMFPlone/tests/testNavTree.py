@@ -1,30 +1,27 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFCore.utils import getToolByName
-
 from plone.app.layout.navigation.interfaces import INavigationRoot
-
-from plone.app.layout.navigation.navtree import NavtreeStrategyBase
 from plone.app.layout.navigation.navtree import buildFolderTree
+from plone.app.layout.navigation.navtree import NavtreeStrategyBase
 from plone.app.layout.navigation.root import getNavigationRoot
-
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.interfaces import INonStructuralFolder
+from Products.CMFPlone.PloneFolder import PloneFolder
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from zope.interface import directlyProvides
 from zope.interface import implements
-
-default_user = PloneTestCase.default_user
-
-from Products.CMFPlone.PloneFolder import PloneFolder
-from Products.CMFPlone.interfaces import INonStructuralFolder
 
 
 class DummyNonStructuralFolder(PloneFolder):
     implements(INonStructuralFolder)
 
 
-class TestFolderTree(PloneTestCase.PloneTestCase):
+class TestFolderTree(CMFPloneTestCase):
     '''Test the basic buildFolderTree method'''
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.populateSite()
         self.setupAuthenticator()
 
@@ -48,7 +45,7 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
                 +-doc211
                 +-doc212
         """
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
         for item in self.portal.getFolderContents():
             self.portal._delObject(item.getId)
@@ -74,7 +71,7 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
         folder21 = getattr(folder2, 'folder21')
         folder21.invokeFactory('Document', 'doc211')
         folder21.invokeFactory('Document', 'doc212')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     # Get from the root, filters
 
@@ -160,13 +157,13 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
         self.assertEqual(len(tree[5]['children']), 0)
 
     def testNonFolderishObjectNotExpanded(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         f = DummyNonStructuralFolder('ns_folder')
         self.portal._setObject('ns_folder', f)
         ns_folder = self.portal.ns_folder
         self.portal.portal_catalog.indexObject(self.portal.ns_folder)
         ns_folder.invokeFactory('Document', 'doc')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         tree = buildFolderTree(self.portal, self.portal.ns_folder)['children']
         rootPath = '/'.join(self.portal.getPhysicalPath())
         self.assertEqual(tree[-1]['item'].getPath(), rootPath + '/ns_folder')
@@ -175,13 +172,13 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
     def testShowAllParentsOverridesNonFolderishObjectNotExpanded(self):
         strategy = NavtreeStrategyBase()
         strategy.showAllParents = True
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         f = DummyNonStructuralFolder('ns_folder')
         self.portal._setObject('ns_folder', f)
         ns_folder = self.portal.ns_folder
         self.portal.portal_catalog.indexObject(self.portal.ns_folder)
         ns_folder.invokeFactory('Document', 'doc')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
         tree = buildFolderTree(self.portal, self.portal.ns_folder.doc,
                                strategy=strategy)['children']
         rootPath = '/'.join(self.portal.getPhysicalPath())
@@ -405,6 +402,7 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
 
     def testGetFromRootWithCurrentNavtreePruned(self):
         context = self.portal.folder1.doc11
+
         class Strategy(NavtreeStrategyBase):
             def subtreeFilter(self, node):
                 return (node['item'].getId != 'folder1')
@@ -461,7 +459,12 @@ class TestFolderTree(PloneTestCase.PloneTestCase):
                 self.assertEqual(t['currentParent'], False)
 
 
-class TestNavigationRoot(PloneTestCase.PloneTestCase):
+class TestNavigationRoot(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     def testGetNavigationRootPropertyNotSet(self):
         self.portal.portal_properties.navtree_properties._delProperty('root')

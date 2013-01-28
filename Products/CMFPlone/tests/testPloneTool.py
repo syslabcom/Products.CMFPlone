@@ -1,12 +1,9 @@
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
-
-from Products.CMFCore.utils import getToolByName
 from Acquisition import Implicit
-
-default_user = PloneTestCase.default_user
-portal_name = PloneTestCase.portal_name
-
+from plone.app.testing import TEST_USER_NAME
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 class DummyTitle(Implicit):
     def Title(self):
@@ -20,9 +17,12 @@ class DummyTitle(Implicit):
         return 'foobar'
 
 
-class TestPloneTool(PloneTestCase.PloneTestCase):
+class TestPloneTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
 
     def testvalidateSingleEmailAddress(self):
@@ -172,9 +172,12 @@ class TestPloneTool(PloneTestCase.PloneTestCase):
             ['File', 'Non Existing Type']), ['File'])
 
 
-class TestOwnershipStuff(PloneTestCase.PloneTestCase):
+class TestOwnershipStuff(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
         self.membership = self.portal.portal_membership
         self.membership.addMember('new_owner', 'secret', ['Member'], [])
@@ -195,12 +198,12 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
 
     def testChangeOwnershipOf(self):
         # Should take ownership
-        self.assertEqual(self.folder1.getOwnerTuple()[1], default_user)
-        self.assertList(self.folder1.get_local_roles_for_userid(default_user),
+        self.assertEqual(self.folder1.getOwnerTuple()[1], TEST_USER_NAME)
+        self.assertList(self.folder1.get_local_roles_for_userid(TEST_USER_NAME),
                         ['Owner'])
 
         self.utils.changeOwnershipOf(self.folder1, 'new_owner')
-        self.assertEqual(self.folder1.getOwnerTuple()[0], [portal_name,
+        self.assertEqual(self.folder1.getOwnerTuple()[0], [self.portal.Title(),
                          'acl_users'])
         self.assertEqual(self.folder1.getOwnerTuple()[1], 'new_owner')
         self.assertList(self.folder1.get_local_roles_for_userid('new_owner'),
@@ -208,7 +211,7 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
 
         # Initial creator no longer has Owner role.
         self.assertList(
-            self.folder1.get_local_roles_for_userid(default_user), [])
+            self.folder1.get_local_roles_for_userid(TEST_USER_NAME), [])
 
     def testChangeOwnershipOfWithTopAclUsers(self):
         # Should be able to give ownership to a user in the top level
@@ -222,7 +225,7 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
 
         # Initial creator no longer has Owner role.
         self.assertList(
-            self.folder1.get_local_roles_for_userid(default_user), [])
+            self.folder1.get_local_roles_for_userid(TEST_USER_NAME), [])
 
     def testChangeOwnershipOfKeepsOtherRoles(self):
         # Should preserve roles other than Owner
@@ -234,7 +237,7 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
         self.assertList(self.folder1.get_local_roles_for_userid('new_owner'),
                         ['Owner', 'Reviewer'])
         self.assertList(
-            self.folder1.get_local_roles_for_userid(default_user), [])
+            self.folder1.get_local_roles_for_userid(TEST_USER_NAME), [])
 
     def testChangeOwnershipOfRecursive(self):
         # Should take ownership of subobjects as well
@@ -243,21 +246,21 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
         self.assertList(self.folder1.get_local_roles_for_userid('new_owner'),
                         ['Owner'])
         self.assertList(
-            self.folder1.get_local_roles_for_userid(default_user), [])
+            self.folder1.get_local_roles_for_userid(TEST_USER_NAME), [])
         self.assertEqual(self.folder2.getOwnerTuple()[1], 'new_owner')
         self.assertList(self.folder2.get_local_roles_for_userid('new_owner'),
                         ['Owner'])
         self.assertList(
-            self.folder2.get_local_roles_for_userid(default_user), [])
+            self.folder2.get_local_roles_for_userid(TEST_USER_NAME), [])
         self.assertEqual(self.folder3.getOwnerTuple()[1], 'new_owner')
         self.assertList(self.folder3.get_local_roles_for_userid('new_owner'),
                         ['Owner'])
         self.assertList(
-            self.folder3.get_local_roles_for_userid(default_user), [])
+            self.folder3.get_local_roles_for_userid(TEST_USER_NAME), [])
 
     def testGetOwnerName(self):
         # Test that getOwnerName gets the Owner name
-        self.assertEqual(self.utils.getOwnerName(self.folder1), default_user)
+        self.assertEqual(self.utils.getOwnerName(self.folder1), TEST_USER_NAME)
         self.utils.changeOwnershipOf(self.folder1, 'new_owner')
         self.assertEqual(self.utils.getOwnerName(self.folder1), 'new_owner')
 
@@ -292,9 +295,12 @@ class TestOwnershipStuff(PloneTestCase.PloneTestCase):
         self.assertList(filtered_roles[1], ['Owner', 'Reviewer'])
 
 
-class TestEditMetadata(PloneTestCase.PloneTestCase):
+class TestEditMetadata(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
         self.folder.invokeFactory('Document', id='doc')
         self.doc = self.folder.doc
@@ -442,9 +448,12 @@ class TestEditMetadata(PloneTestCase.PloneTestCase):
         self.assertEqual(self.doc.Contributors(), ('Foo', 'Bar', 'Baz'))
 
 
-class TestEditMetadataIndependence(PloneTestCase.PloneTestCase):
+class TestEditMetadataIndependence(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
         self.folder.invokeFactory('Document', id='doc')
         self.doc = self.folder.doc
@@ -521,20 +530,23 @@ class TestEditMetadataIndependence(PloneTestCase.PloneTestCase):
         self.assertEqual(self.doc.Rights(), 'Copyleft')
 
 
-class TestBreadCrumbs(PloneTestCase.PloneTestCase):
+class TestBreadCrumbs(CMFPloneTestCase):
     '''Tests for the portal tabs query'''
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
         self.populateSite()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', 'folder1')
         folder1 = getattr(self.portal, 'folder1')
         folder1.invokeFactory('Document', 'doc11')
         folder1.invokeFactory('File', 'file11')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testCreateBreadCrumbs(self):
         # See if we can create one at all
@@ -555,11 +567,14 @@ class TestBreadCrumbs(PloneTestCase.PloneTestCase):
         self.assertEqual(crumbs[-1]['absolute_url'][-5:], '/view')
 
 
-class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
+class TestIDGenerationMethods(CMFPloneTestCase):
     """Tests the isIDAutoGenerated method and pretty_title_or_id
     """
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.utils = self.portal.plone_utils
 
     def testAutoGeneratedId(self):
@@ -588,7 +603,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
                          self.folder.getId())
 
     def test_pretty_title_or_id_when_autogenerated(self):
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.setTitle('')
         self.folder.setId('folder.2004-11-09.0123456789')
         self.assertEqual(self.utils.pretty_title_or_id(self.folder),
@@ -597,7 +612,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
                                 'Marker')
 
     def test_pretty_title_or_id_works_with_method_that_needs_context(self):
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         # Create a dummy class that looks at it's context to find the title
         new_obj = DummyTitle()
         new_obj = new_obj.__of__(self.folder)
@@ -609,7 +624,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
 
     def test_pretty_title_or_id_on_catalog_brain(self):
         cat = self.portal.portal_catalog
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.edit(title='My pretty title', subject='foobar')
         results = cat(Subject='foobar')
         self.assertEqual(len(results), 1)
@@ -618,7 +633,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
 
     def test_pretty_title_or_id_on_catalog_brain_returns_id(self):
         cat = self.portal.portal_catalog
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.edit(title='', subject='foobar')
         results = cat(Subject='foobar')
         self.assertEqual(len(results), 1)
@@ -627,7 +642,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
 
     def test_pretty_title_or_id_on_catalog_brain_autogenerated(self):
         cat = self.portal.portal_catalog
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.edit(id='folder.2004-11-09.0123456789',
                          title='', subject='foobar')
         results = cat(Subject='foobar')
@@ -637,7 +652,7 @@ class TestIDGenerationMethods(PloneTestCase.PloneTestCase):
 
     def test_pretty_title_or_id_on_catalog_brain_no_title(self):
         cat = self.portal.portal_catalog
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         # Remove Title from catalog metadata to simulate a catalog with no
         # Title metadata and similar pathological cases.
         cat.delColumn('Title')

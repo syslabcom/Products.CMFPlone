@@ -1,11 +1,15 @@
 from AccessControl import Unauthorized
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
 from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.utils import set_own_login_name
 from Products.CMFPlone.RegistrationTool import get_member_by_login_name
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.utils import set_own_login_name
 
+class TestEmailLogin(CMFPloneTestCase):
 
-class TestEmailLogin(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def testUseEmailProperty(self):
         props = getToolByName(self.portal, 'portal_properties').site_properties
@@ -16,10 +20,10 @@ class TestEmailLogin(PloneTestCase.PloneTestCase):
         memship = self.portal.portal_membership
         users = self.portal.acl_users.source_users
         member = memship.getAuthenticatedMember()
-        self.assertEqual(users.getLoginForUserId(PloneTestCase.default_user),
-                         PloneTestCase.default_user)
+        self.assertEqual(users.getLoginForUserId(TEST_USER_ID),
+                         TEST_USER_NAME)
         set_own_login_name(member, 'maurits')
-        self.assertEqual(users.getLoginForUserId(PloneTestCase.default_user),
+        self.assertEqual(users.getLoginForUserId(TEST_USER_ID),
                          'maurits')
 
     def testSetLoginNameOfOther(self):
@@ -86,16 +90,16 @@ class TestEmailLogin(PloneTestCase.PloneTestCase):
     def test_get_member_by_login_name(self):
         memship = self.portal.portal_membership
         context = self.portal
-        member = memship.getMemberById(PloneTestCase.default_user)
+        member = memship.getMemberById(TEST_USER_ID)
 
         # Login name and user name start out the same
-        found = get_member_by_login_name(context, PloneTestCase.default_user)
+        found = get_member_by_login_name(context, TEST_USER_NAME)
         self.assertEqual(member, found)
 
         # Change the login name:
         set_own_login_name(member, 'vanrees')
         # A member with this user name is still returned:
-        found = get_member_by_login_name(context, PloneTestCase.default_user)
+        found = get_member_by_login_name(context, TEST_USER_NAME)
         self.assertEqual(member, found)
         # With the changed login name we can find the member:
         found = get_member_by_login_name(context, 'vanrees')

@@ -1,12 +1,17 @@
-from Products.CMFPlone.tests import PloneTestCase
 from Products.CMFPlone import tests
-from Products.Five import zcml
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from Products.Five import fiveconfigure
+from Products.Five import zcml
 
+import pkg_resources
 
-class TestQuickInstallerTool(PloneTestCase.PloneTestCase):
+class TestQuickInstallerTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.qi = self.portal.portal_quickinstaller
 
     def _installed(self):
@@ -17,12 +22,12 @@ class TestQuickInstallerTool(PloneTestCase.PloneTestCase):
 
     def testInstallUninstallProduct(self):
         try:
-            import Products.CMFPlacefulWorkflow
-        except ImportError:
+            pkg_resources.get_distribution('Products.CMFPlacefulWorkflow')
+        except pkg_resources.DistributionNotFound:
             return
         # CMFPlacefulWorkflow should be uninstalled, we install it and
         # it should not show up as installable
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         self.qi.installProducts(['CMFPlacefulWorkflow', ])
         self.assertTrue('CMFPlacefulWorkflow' in self._installed())
         self.assertFalse('CMFPlacefulWorkflow' in self._available())

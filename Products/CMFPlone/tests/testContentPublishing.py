@@ -3,7 +3,12 @@
 # code inspired by Ween
 #
 
-from Products.CMFPlone.tests import PloneTestCase
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 text = """I lick my brain in silence
 Rather squeeze my head instead
@@ -37,7 +42,7 @@ props = {'description': 'song by ween',
          'subject': ['psychedelic', 'pop', '13th floor elevators']}
 
 
-class TestContentPublishing(PloneTestCase.PloneTestCase):
+class TestContentPublishing(CMFPloneTestCase):
     """ The instant publishing drop down UI.
         !NOTE! CMFDefault.Document overrides setFormat and Format
         so it acts strangely.  This is also hardcoded to work with Document.
@@ -49,11 +54,15 @@ class TestContentPublishing(PloneTestCase.PloneTestCase):
         place to keep them.
     """
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        self.workflow = self.portal.portal_workflow
         self.portal.acl_users._doAddUser('user1', 'secret', ['Member'], [])
         self.membership = self.portal.portal_membership
-        self.createMemberarea('user1')
-        self.workflow = self.portal.portal_workflow
+        self.membership.createMemberArea('user1')
+        setRoles(self.portal, TEST_USER_ID, ['Owner',])
         self.setupAuthenticator()
 
     def _checkMD(self, obj, **changes):
@@ -82,133 +91,133 @@ class TestContentPublishing(PloneTestCase.PloneTestCase):
     # Test the recursive behaviour of content_status_modify and folder_publish:
 
     def testPublishingSubobjects(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.invokeFactory('Folder', id='f1', title='Folder 1')
-        self.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
-        self.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.invokeFactory('Folder', id='f1', title='Folder 1')
+        self.portal.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
+        self.portal.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
         paths = []
-        for o in (self.folder.d1, self.folder.f1):
+        for o in (self.portal.folder.d1, self.portal.folder.f1):
             paths.append('/'.join(o.getPhysicalPath()))
 
         # folder_publish requires a non-GET request
         self.setRequestMethod('POST')
-        self.folder.folder_publish(workflow_action='publish',
+        self.portal.folder.folder_publish(workflow_action='publish',
                                    paths=paths,
                                    include_children=True)
-        for o in (self.folder.d1, self.folder.f1, self.folder.f1.d2,
-                  self.folder.f1.f2):
+        for o in (self.portal.folder.d1, self.portal.folder.f1, self.portal.folder.f1.d2,
+                  self.portal.folder.f1.f2):
             self.assertEqual(self.workflow.getInfoFor(o, 'review_state'),
                              'published')
 
     def testPublishingSubobjectsAndExpireThem(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.invokeFactory('Folder', id='f1', title='Folder 1')
-        self.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
-        self.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.invokeFactory('Folder', id='f1', title='Folder 1')
+        self.portal.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
+        self.portal.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
         paths = []
-        for o in (self.folder.d1, self.folder.f1):
+        for o in (self.portal.folder.d1, self.portal.folder.f1):
             paths.append('/'.join(o.getPhysicalPath()))
 
         # folder_publish requires a non-GET request
         self.setRequestMethod('POST')
-        self.folder.folder_publish(workflow_action='publish',
+        self.portal.folder.folder_publish(workflow_action='publish',
                                    paths=paths,
                                    effective_date='1/1/2001',
                                    expiration_date='1/2/2001',
                                    include_children=True)
-        for o in (self.folder.d1, self.folder.f1, self.folder.f1.d2,
-                  self.folder.f1.f2):
+        for o in (self.portal.folder.d1, self.portal.folder.f1, self.portal.folder.f1.d2,
+                  self.portal.folder.f1.f2):
             self.assertEqual(self.workflow.getInfoFor(o, 'review_state'),
                              'published')
             self.assertTrue(self.portal.isExpired(o))
 
     def testPublishingWithoutSubobjects(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.invokeFactory('Folder', id='f1', title='Folder 1')
-        self.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
-        self.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.invokeFactory('Folder', id='f1', title='Folder 1')
+        self.portal.folder.f1.invokeFactory('Document', id='d2', title='Doc 2')
+        self.portal.folder.f1.invokeFactory('Folder', id='f2', title='Folder 2')
         paths = []
-        for o in (self.folder.d1, self.folder.f1):
+        for o in (self.portal.folder.d1, self.portal.folder.f1):
             paths.append('/'.join(o.getPhysicalPath()))
 
         # folder_publish requires a non-GET request
         self.setRequestMethod('POST')
-        self.folder.folder_publish(workflow_action='publish',
+        self.portal.folder.folder_publish(workflow_action='publish',
                                    paths=paths,
                                    include_children=False)
-        for o in (self.folder.d1, self.folder.f1):
+        for o in (self.portal.folder.d1, self.portal.folder.f1):
             self.assertEqual(self.workflow.getInfoFor(o, 'review_state'),
                              'published')
-        for o in (self.folder.f1.d2, self.folder.f1.f2):
+        for o in (self.portal.folder.f1.d2, self.portal.folder.f1.f2):
             self.assertEqual(self.workflow.getInfoFor(o, 'review_state'),
                              'visible')
 
     def testPublishingNonDefaultPageLeavesFolderAlone(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.d1.content_status_modify('publish')
-        self.assertEqual(self.workflow.getInfoFor(self.folder, 'review_state'),
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.d1.content_status_modify('publish')
+        self.assertEqual(self.workflow.getInfoFor(self.portal.folder, 'review_state'),
                          'visible')
         self.assertEqual(
-                    self.workflow.getInfoFor(self.folder.d1, 'review_state'),
+                    self.workflow.getInfoFor(self.portal.folder.d1, 'review_state'),
                     'published')
 
     def testPublishingDefaultPagePublishesFolder(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.setDefaultPage('d1')
-        self.folder.d1.content_status_modify('publish')
-        self.assertEqual(self.workflow.getInfoFor(self.folder, 'review_state'),
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.setDefaultPage('d1')
+        self.portal.folder.d1.content_status_modify('publish')
+        self.assertEqual(self.workflow.getInfoFor(self.portal.folder, 'review_state'),
                          'published')
         self.assertEqual(
-                    self.workflow.getInfoFor(self.folder.d1, 'review_state'),
+                    self.workflow.getInfoFor(self.portal.folder.d1, 'review_state'),
                     'published')
 
     def testPublishingDefaultPageWhenFolderCannotBePublished(self):
-        self.setRoles(['Manager'])  # Make sure we can publish directly
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.setDefaultPage('d1')
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])  # Make sure we can publish directly
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.setDefaultPage('d1')
         # make parent be published already when publishing its default document
         # results in an attempt to do it again
-        self.folder.content_status_modify('publish')
-        self.assertEqual(self.workflow.getInfoFor(self.folder, 'review_state'),
+        self.portal.folder.content_status_modify('publish')
+        self.assertEqual(self.workflow.getInfoFor(self.portal.folder, 'review_state'),
                          'published')
-        self.folder.d1.content_status_modify('publish')
-        self.assertEqual(self.workflow.getInfoFor(self.folder, 'review_state'),
+        self.portal.folder.d1.content_status_modify('publish')
+        self.assertEqual(self.workflow.getInfoFor(self.portal.folder, 'review_state'),
                          'published')
         self.assertEqual(
-                    self.workflow.getInfoFor(self.folder.d1, 'review_state'),
+                    self.workflow.getInfoFor(self.portal.folder.d1, 'review_state'),
                     'published')
 
     # test setting effective/expiration date and isExpired script
 
     def testIsExpiredWithExplicitExpiredContent(self):
-        self.setRoles(['Manager'])
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.d1.content_status_modify(workflow_action='publish',
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.d1.content_status_modify(workflow_action='publish',
                                              effective_date='1/1/2001',
                                              expiration_date='1/2/2001')
-        self.assertTrue(self.portal.isExpired(self.folder.d1))
+        self.assertTrue(self.portal.isExpired(self.portal.folder.d1))
 
     def testIsExpiredWithImplicitExpiredContent(self):
-        self.setRoles(['Manager'])
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.d1.content_status_modify(workflow_action='publish',
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.d1.content_status_modify(workflow_action='publish',
                                              effective_date='1/1/2001',
                                              expiration_date='1/2/2001')
-        self.assertTrue(self.folder.d1.isExpired())
+        self.assertTrue(self.portal.folder.d1.isExpired())
 
     def testIsExpiredWithExplicitNonExpiredContent(self):
-        self.setRoles(['Manager'])
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.d1.content_status_modify(workflow_action='publish')
-        self.assertFalse(self.portal.isExpired(self.folder.d1))
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.d1.content_status_modify(workflow_action='publish')
+        self.assertFalse(self.portal.isExpired(self.portal.folder.d1))
 
     def testIsExpiredWithImplicitNonExpiredContent(self):
-        self.setRoles(['Manager'])
-        self.folder.invokeFactory('Document', id='d1', title='Doc 1')
-        self.folder.d1.content_status_modify(workflow_action='publish')
-        self.assertFalse(self.folder.d1.isExpired())
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
+        self.portal.folder.invokeFactory('Document', id='d1', title='Doc 1')
+        self.portal.folder.d1.content_status_modify(workflow_action='publish')
+        self.assertFalse(self.portal.folder.d1.isExpired())

@@ -1,31 +1,31 @@
-import unittest
-
-from email import message_from_string
-from zope.component import getSiteManager
-from Products.CMFPlone.tests import PloneTestCase
-
 from AccessControl import Unauthorized
+from email import message_from_string
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
 from Products.CMFCore.permissions import AddPortalMember
+from Products.CMFPlone.RegistrationTool import _checkEmail
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from Products.CMFPlone.tests.utils import MockMailHost
 from Products.MailHost.interfaces import IMailHost
-from Products.CMFPlone.RegistrationTool import _checkEmail
-
-member_id = 'new_member'
+from zope.component import getSiteManager
 
 
-class TestRegistrationTool(PloneTestCase.PloneTestCase):
+class TestRegistrationTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.registration = self.portal.portal_registration
-        self.portal.acl_users.userFolderAddUser("userid", "password",
-                (), (), ())
+        self.portal.acl_users.userFolderAddUser("userid", "password", (), (), ())
         self.portal.acl_users._doAddGroup("groupid", ())
 
     def testJoinCreatesUser(self):
-        self.registration.addMember(member_id, 'secret',
-                          properties={'username': member_id,
+        self.registration.addMember(TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME,
                                       'email': 'foo@bar.com'})
-        user = self.portal.acl_users.getUserById(member_id)
+        user = self.portal.acl_users.getUserById(TEST_USER_ID)
         self.assertTrue(user, 'addMember failed to create user')
 
     def testCannotRegisterWithRootAdminUsername(self):
@@ -37,40 +37,40 @@ class TestRegistrationTool(PloneTestCase.PloneTestCase):
                                       'email': 'foo@bar.com'})
 
     def testJoinWithUppercaseEmailCreatesUser(self):
-        self.registration.addMember(member_id, 'secret',
-                          properties={'username': member_id,
+        self.registration.addMember(TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME,
                                       'email': 'FOO@BAR.COM'})
-        user = self.portal.acl_users.getUserById(member_id)
+        user = self.portal.acl_users.getUserById(TEST_USER_ID)
         self.assertTrue(user, 'addMember failed to create user')
 
     def testJoinWithoutEmailRaisesValueError(self):
         self.assertRaises(ValueError,
                           self.registration.addMember,
-                          member_id, 'secret',
-                          properties={'username': member_id, 'email': ''})
+                          TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME, 'email': ''})
 
     def testJoinWithBadEmailRaisesValueError(self):
         self.assertRaises(ValueError,
                           self.registration.addMember,
-                          member_id, 'secret',
+                          TEST_USER_ID, 'secret',
                           properties={
-                            'username': member_id,
+                            'username': TEST_USER_NAME,
                             'email': 'foo@bar.com, fred@bedrock.com'})
 
     def testJoinAsExistingMemberRaisesValueError(self):
         self.assertRaises(ValueError,
                           self.registration.addMember,
-                          PloneTestCase.default_user, 'secret',
+                          TEST_USER_NAME, 'secret',
                           properties={'username': 'Dr FooBar',
                                       'email': 'foo@bar.com'})
 
     def testJoinAsExistingNonMemberUserRaisesValueError(self):
         # http://dev.plone.org/plone/ticket/3221
-        self.portal.acl_users._doAddUser(member_id, 'secret', [], [])
+        self.portal.acl_users._doAddUser(TEST_USER_ID, 'secret', [], [])
         self.assertRaises(ValueError,
                           self.registration.addMember,
-                          member_id, 'secret',
-                          properties={'username': member_id,
+                          TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME,
                                       'email': 'foo@bar.com'})
 
     def testJoinWithPortalIdAsUsernameRaisesValueError(self):
@@ -114,14 +114,14 @@ class TestRegistrationTool(PloneTestCase.PloneTestCase):
         sm.unregisterUtility(provided=IMailHost)
         sm.registerUtility(mails, IMailHost)
         # Register a user
-        self.registration.addMember(member_id, 'secret',
-                          properties={'username': member_id,
+        self.registration.addMember(TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME,
                                       'email': 'foo@bar.com'})
         # Set the portal email info
         self.portal.setTitle('T\xc3\xa4st Portal')
         self.portal.email_from_name = 'T\xc3\xa4st Admin'
         self.portal.email_from_address = 'bar@baz.com'
-        self.registration.registeredNotify(member_id)
+        self.registration.registeredNotify(TEST_USER_ID)
         self.assertEqual(len(mails.messages), 1)
         msg = message_from_string(mails.messages[0])
         # We get an encoded subject
@@ -143,15 +143,15 @@ class TestRegistrationTool(PloneTestCase.PloneTestCase):
         sm.unregisterUtility(provided=IMailHost)
         sm.registerUtility(mails, IMailHost)
         # Register a user
-        self.registration.addMember(member_id, 'secret',
-                          properties={'username': member_id,
+        self.registration.addMember(TEST_USER_ID, 'secret',
+                          properties={'username': TEST_USER_NAME,
                                       'email': 'foo@bar.com'})
         # Set the portal email info
         self.portal.setTitle('T\xc3\xa4st Portal')
         self.portal.email_from_name = 'T\xc3\xa4st Admin'
         self.portal.email_from_address = 'bar@baz.com'
         from zope.publisher.browser import TestRequest
-        self.registration.mailPassword(member_id, TestRequest())
+        self.registration.mailPassword(TEST_USER_ID, TestRequest())
         self.assertEqual(len(mails.messages), 1)
         msg = message_from_string(mails.messages[0])
         # We get an encoded subject
@@ -165,9 +165,12 @@ class TestRegistrationTool(PloneTestCase.PloneTestCase):
         self.assertTrue('T=C3=A4st Porta' in msg.get_payload())
 
 
-class TestPasswordGeneration(PloneTestCase.PloneTestCase):
+class TestPasswordGeneration(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.registration = self.portal.portal_registration
 
     def testMD5BaseAttribute(self):
@@ -197,7 +200,7 @@ class TestPasswordGeneration(PloneTestCase.PloneTestCase):
     def testGeneratePassword(self):
         pw = self.registration.generatePassword()
         # default password is now very long as it's never seen by the user
-        self.assertTrue(len(pw)>=20)
+        self.assertTrue(len(pw) >= 20)
 
     def testGenerateResetCode(self):
         salt = 'foo'
@@ -205,7 +208,12 @@ class TestPasswordGeneration(PloneTestCase.PloneTestCase):
         self.assertEqual(rc, self.registration.generateResetCode(salt))
 
 
-class TestEmailValidityChecker(unittest.TestCase):
+class TestEmailValidityChecker(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     check = lambda _, email: _checkEmail(email)
 
@@ -226,6 +234,11 @@ class TestEmailValidityChecker(unittest.TestCase):
         self.assertTrue(*result)
 
 
-class TestRegistrationToolEmailValidityChecker(PloneTestCase.PloneTestCase):
+class TestRegistrationToolEmailValidityChecker(CMFPloneTestCase):
+
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
 
     check = lambda _, email: _.portal.portal_registration.isValidEmail(email)

@@ -1,29 +1,30 @@
+from plone.testing import layered
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
 import doctest
-import os
 import glob
+import os
 import unittest
 
-from Testing.ZopeTestCase import FunctionalDocFileSuite as Suite
-from Products.CMFPlone.tests import PloneTestCase
-
-
-UNITTESTS = ['messages.txt', 'mails.txt', 'emaillogin.txt']
+UNITTESTS = ['messages.rst', 'mails.rst', 'emaillogin.rst']
 OPTIONFLAGS = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
 
 def list_doctests():
-    return [filename for filename in
-            glob.glob(os.path.sep.join([os.path.dirname(__file__), '*.txt']))
+    filenames = glob.glob(
+        os.path.sep.join([os.path.dirname(__file__), '*.rst']))
+    return [os.path.basename(filename)
+            for filename in filenames
             if os.path.basename(filename) not in UNITTESTS]
-
 
 def test_suite():
     filenames = list_doctests()
-
-    suites = [Suite(os.path.basename(filename),
-               optionflags=OPTIONFLAGS,
-               package='Products.CMFPlone.tests',
-               test_class=PloneTestCase.FunctionalTestCase)
-              for filename in filenames]
-
-    return unittest.TestSuite(suites)
+    suite = unittest.TestSuite()
+    for filename in filenames:
+        suite.addTests([
+            layered(doctest.DocFileSuite(filename,
+                                         package = 'Products.CMFPlone.tests',
+                                         optionflags = OPTIONFLAGS),
+                    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING)
+        ])
+    return suite

@@ -1,12 +1,16 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from traceback import format_exception
-from zope.i18nmessageid.message import Message
-
 from Acquisition import Explicit
 from OFS.SimpleItem import Item
-from Products.CMFCore.ActionInformation import ActionInfo
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
 from Products.CMFCore.ActionInformation import Action
+from Products.CMFCore.ActionInformation import ActionInfo
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from traceback import format_exception
+from zope.i18nmessageid.message import Message
 
 
 class ExplicitItem(Item, Explicit):
@@ -15,11 +19,18 @@ class ExplicitItem(Item, Explicit):
     meta_type = 'Dummy Item'
 
 
-class TestActionsTool(PloneTestCase.PloneTestCase):
+class TestActionsTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        acl_users = getToolByName(self.portal, 'acl_users')
         self.actions = self.portal.portal_actions
-        self.portal.acl_users._doAddUser('user1', 'secret', ['Member'], [])
+        acl_users.userFolderAddUser('user1', 'secret', ['Member'], [])
+
+        login(self.portal, TEST_USER_NAME)
+        setRoles(self.portal, TEST_USER_ID, ['Owner'])
 
     def fail_tb(self, msg):
         """ special fail for capturing errors """
@@ -82,12 +93,12 @@ class TestActionsTool(PloneTestCase.PloneTestCase):
                                permission='View',
                                category='document_actions',
                                visible=1)
-        actions = self.actions.listFilteredActionsFor(self.folder)
+        actions = self.actions.listFilteredActionsFor(self.portal.folder)
         match = [a for a in actions['document_actions'] if a['id'] == 'foo']
         self.assertTrue(match)
-        self.portal.portal_workflow.doActionFor(self.folder, 'hide')
-        self.login('user1')
-        actions = self.actions.listFilteredActionsFor(self.folder)
+        self.portal.portal_workflow.doActionFor(self.portal.folder, 'hide')
+        login(self.portal, 'user1')
+        actions = self.actions.listFilteredActionsFor(self.portal.folder)
         match = [a for a in actions.get('document_actions', [])
                     if a['id'] == 'foo']
         self.assertFalse(match)
@@ -102,7 +113,7 @@ class TestActionsTool(PloneTestCase.PloneTestCase):
                     category='folder',
                     visible=1)
 
-        actions = self.actions.listFilteredActionsFor(self.folder)
+        actions = self.actions.listFilteredActionsFor(self.portal.folder)
         actions['folder'][0]['url']
 
     def testAllActionsAreRenderedAsMessages(self):

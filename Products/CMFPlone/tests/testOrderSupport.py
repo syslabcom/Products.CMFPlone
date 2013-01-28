@@ -1,11 +1,15 @@
-from Products.CMFPlone.tests import PloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 import transaction
 
 
-class TestOrderSupport(PloneTestCase.PloneTestCase):
+class TestOrderSupport(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         # Add a bunch of subobjects we can order later on
         self.folder.invokeFactory('Document', id='foo')
         self.folder.invokeFactory('Document', id='bar')
@@ -183,10 +187,13 @@ class TestOrderSupport(PloneTestCase.PloneTestCase):
         self.assertEqual(self.folder.getObjectPosition('baz'), 2)
 
 
-class TestOrderSupportInPortal(PloneTestCase.PloneTestCase):
+class TestOrderSupportInPortal(CMFPloneTestCase):
 
-    def afterSetUp(self):
-        self.setRoles(['Manager'])
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         # Add a bunch of subobjects we can order later on
         self.portal.invokeFactory('Document', id='foo')
         self.portal.invokeFactory('Document', id='bar')

@@ -1,12 +1,10 @@
-from zope.interface import directlyProvides
-from zope.component import provideAdapter, getGlobalSiteManager
-
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests.dummy import Dummy, DummyWorkflowChainAdapter
-from Products.CMFDefault.interfaces import IDocument
 from Products.CMFCore.interfaces import IWorkflowTool
-
-default_user = PloneTestCase.default_user
+from Products.CMFDefault.interfaces import IDocument
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.dummy import Dummy, DummyWorkflowChainAdapter
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from zope.component import provideAdapter, getGlobalSiteManager
+from zope.interface import directlyProvides
 
 # INFO - Ugh...Rather than use and update ambiguous numbers,
 # we maintain a mapping of the various workflows to states
@@ -28,9 +26,12 @@ for states in workflow_dict.values():
     all_states += list(states)
 
 
-class TestWorkflowTool(PloneTestCase.PloneTestCase):
+class TestWorkflowTool(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.workflow = self.portal.portal_workflow
 
         self.portal.acl_users._doAddUser('member', 'secret', ['Member'], [])

@@ -1,15 +1,20 @@
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from Products.CMFPlone.factory import addPloneSite
 from Testing.testbrowser import Browser
-from Products.PloneTestCase import ptc
-
-ptc.setupPloneSite(id=ptc.portal_name)
-ptc.setupPloneSite(id='login_portal')
-ptc.setupPloneSite(id='another_portal')
 
 
-class SSOLoginTestCase(ptc.FunctionalTestCase):
+class SSOLoginTestCase(CMFPloneTestCase):
 
-    def afterSetUp(self):
-        ptc.FunctionalTestCase.afterSetUp(self)
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+
+        addPloneSite(self.app, 'login_portal')
+        addPloneSite(self.app, 'another_portal')
 
         self.browser = Browser()
         self.browser.handleErrors = False  # Don't get HTTP 500 pages
@@ -20,7 +25,7 @@ class SSOLoginTestCase(ptc.FunctionalTestCase):
         # Add our user to the other portals to simulate an ldap environment.
         for portal in (self.login_portal, self.another_portal):
             portal.acl_users.userFolderAddUser(
-                ptc.default_user, ptc.default_password, ['Member'], []
+                TEST_USER_NAME, TEST_USER_PASSWORD, ['Member'], []
                 )
 
         # Configure the login portal to allow logins from our sites.
@@ -59,8 +64,8 @@ class TestSSOLogin(SSOLoginTestCase):
         browser = self.browser
         browser.open(self.portal.absolute_url())
         browser.getLink('Log in').click()
-        browser.getControl(name='__ac_name').value = ptc.default_user
-        browser.getControl(name='__ac_password').value = ptc.default_password
+        browser.getControl(name='__ac_name').value = TEST_USER_NAME
+        browser.getControl(name='__ac_password').value = TEST_USER_PASSWORD
         browser.getControl(name='submit').click()
         self.assertEqual(self.browser.cookies.getinfo('__ac')['path'],
                          self.login_portal.absolute_url_path())
@@ -94,8 +99,8 @@ class TestSSOLogin(SSOLoginTestCase):
         # Login to the central portal
         browser.open(self.login_portal.absolute_url())
         browser.getLink('Log in').click()
-        browser.getControl(name='__ac_name').value = ptc.default_user
-        browser.getControl(name='__ac_password').value = ptc.default_password
+        browser.getControl(name='__ac_name').value = TEST_USER_NAME
+        browser.getControl(name='__ac_password').value = TEST_USER_PASSWORD
         browser.getControl(name='submit').click()
         # Check we are logged in centrally
         browser.getLink('Log out')
@@ -141,8 +146,8 @@ class TestSSOLoginIframe(SSOLoginTestCase):
         self.assertTrue(link.url.startswith(self.portal.absolute_url()))
         self.assertEqual(link.attrs['target'], '_parent')
         # Login
-        browser.getControl(name='__ac_name').value = ptc.default_user
-        browser.getControl(name='__ac_password').value = ptc.default_password
+        browser.getControl(name='__ac_name').value = TEST_USER_NAME
+        browser.getControl(name='__ac_password').value = TEST_USER_PASSWORD
         browser.getControl(name='submit').click()
         self.assertEqual(self.browser.cookies.getinfo('__ac')['path'],
                          self.login_portal.absolute_url_path())
@@ -191,8 +196,8 @@ class TestSSOLoginIframe(SSOLoginTestCase):
         # Login to the central portal
         browser.open(self.login_portal.absolute_url())
         browser.getLink('Log in').click()
-        browser.getControl(name='__ac_name').value = ptc.default_user
-        browser.getControl(name='__ac_password').value = ptc.default_password
+        browser.getControl(name='__ac_name').value = TEST_USER_NAME
+        browser.getControl(name='__ac_password').value = TEST_USER_PASSWORD
         browser.getControl(name='submit').click()
         # Check we are logged in centrally
         browser.getLink('Log out')

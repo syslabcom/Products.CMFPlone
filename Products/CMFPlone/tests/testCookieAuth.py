@@ -1,20 +1,22 @@
-from Products.CMFPlone.tests import PloneTestCase
-
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
 import base64
 from urlparse import urlparse
 from urllib import urlencode
 
-default_user = PloneTestCase.default_user
-default_password = PloneTestCase.default_password
 
+class TestCookieAuth(CMFPloneTestCase):
 
-class TestCookieAuth(PloneTestCase.FunctionalTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-    def afterSetUp(self):
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.portal_url = self.portal.absolute_url()
         self.portal_path = '/%s' % self.portal.absolute_url(1)
         self.folder_path = '/%s' % self.folder.absolute_url(1)
-        self.auth_info = '%s:%s' % (default_user, default_password)
+        self.auth_info = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         self.cookie = base64.encodestring(self.auth_info)[:-1]
         self.folder.manage_permission('View', ['Manager'], acquire=0)
 
@@ -38,7 +40,7 @@ class TestCookieAuth(PloneTestCase.FunctionalTestCase):
 
     def testSetSessionCookie(self):
         # The __ac cookie should be set for the session only
-        form = {'__ac_name': default_user, '__ac_password': default_password}
+        form = {'__ac_name': TEST_USER_NAME, '__ac_password': TEST_USER_PASSWORD}
 
         response = self.publish(self.portal_path + '/logged_in',
                                 env={'QUERY_STRING': urlencode(form)})

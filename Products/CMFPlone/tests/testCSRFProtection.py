@@ -1,28 +1,38 @@
-from Products.PloneTestCase import PloneTestCase as ptc
-
-from zope.component import queryUtility
-from StringIO import StringIO
-
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
 from plone.keyring.interfaces import IKeyManager
 from plone.protect.authenticator import AuthenticatorView
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneFunctionalTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from StringIO import StringIO
+from zope.component import queryUtility
 
 
-class AuthenticatorTestCase(ptc.FunctionalTestCase):
+class AuthenticatorTestCase(CMFPloneFunctionalTestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
 
     def test_KeyManager(self):
         self.assertTrue(queryUtility(IKeyManager), 'key manager not found')
 
     def checkAuthenticator(self, path, query='', status=200):
-        credentials = '%s:%s' % (ptc.default_user, ptc.default_password)
+        credentials = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         path = '/' + self.portal.absolute_url(relative=True) + path
         data = StringIO(query)
+
         # without authenticator...
         response = self.publish(path=path, basic=credentials, env={},
                                 request_method='POST', stdin=data)
         self.assertEqual(response.getStatus(), 403)
+
         # with authenticator...
         tag = AuthenticatorView('context', 'request').authenticator()
         token = tag.split('"')[5]
@@ -33,11 +43,11 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
 
     def test_PloneTool_changeOwnershipOf(self):
         self.assertNotEqual(self.portal.getOwner().getUserName(),
-                            ptc.default_user)
+                            TEST_USER_NAME)
         self.checkAuthenticator('/change_ownership',
-            'userid=%s' % ptc.default_user, status=302)
+            'userid=%s' % TEST_USER_ID, status=302)
         self.assertEqual(self.portal.getOwner().getUserName(),
-                         ptc.default_user)
+                         TEST_USER_NAME)
 
     def test_PloneTool_deleteObjectsByPaths(self):
         self.assertTrue(self.portal.get('news', None))
@@ -46,19 +56,21 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
         self.assertFalse(self.portal.get('news', None))
 
     def test_PloneTool_transitionObjectsByPaths(self):
-        infoFor = self.portal.portal_workflow.getInfoFor
-        frontpage = self.portal['front-page']
-        self.assertEqual(infoFor(frontpage, 'review_state'), 'visible')
+
+        wf = getToolByName(self.portal, 'portal_workflow')
+        wf.setDefaultChain('plone_workflow')
+
+        self.assertEqual(wf.getInfoFor(self.portal['front-page'], 'review_state'), 'published')
         self.checkAuthenticator(
             '/plone_utils/transitionObjectsByPaths',
-            'workflow_action=publish&paths:list=front-page', status=302)
-        self.assertEqual(infoFor(frontpage, 'review_state'), 'published')
+            'workflow_action=reject&paths:list=front-page', status=302)
+        self.assertEqual(wf.getInfoFor(self.portal['front-page'], 'review_state'), 'visible')
 
     def test_PloneTool_renameObjectsByPaths(self):
         self.assertFalse(self.portal.get('foo', None))
         self.checkAuthenticator(
             '/plone_utils/renameObjectsByPaths',
-            'paths:list=events&new_ids:list=foo&new_titles:list=Foo')
+            'paths:list=news&new_ids:list=foo&new_titles:list=Foo')
         self.assertTrue(self.portal.get('foo', None))
 
     def test_RegistrationTool_addMember(self):
@@ -70,7 +82,7 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
         self.checkAuthenticator(
             '/portal_registration/editMember',
             'member_id=%s&password=y0d4Wg&properties.foo:record='
-                    % ptc.default_user)
+                    % TEST_USER_ID)
 
     def test_MembershipTool_setPassword(self):
         self.checkAuthenticator(
@@ -80,12 +92,12 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
     def test_MembershipTool_deleteMemberArea(self):
         self.checkAuthenticator(
             '/portal_membership/deleteMemberArea',
-            'member_id=%s' % ptc.default_user)
+            'member_id=%s' % TEST_USER_ID)
 
     def test_MembershipTool_deleteMembers(self):
         self.checkAuthenticator(
             '/portal_membership/deleteMembers',
-            'member_ids:list=%s' % ptc.default_user)
+            'member_ids:list=%s' % TEST_USER_ID)
 
     def test_userFolderAddUser(self):
         self.checkAuthenticator(
@@ -96,9 +108,9 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
         self.checkAuthenticator(
             '/acl_users/userFolderEditUser',
             'principal_id=%s&password=bar&domains=&roles:list=Manager'
-                % ptc.default_user)
+                % TEST_USER_ID)
 
     def test_userFolderDelUsers(self):
         self.checkAuthenticator(
             '/acl_users/userFolderDelUsers',
-            'names:list=%s' % ptc.default_user)
+            'names:list=%s' % TEST_USER_NAME)

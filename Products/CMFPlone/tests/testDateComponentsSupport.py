@@ -1,7 +1,6 @@
-from Products.CMFPlone.tests import PloneTestCase
-
 from DateTime import DateTime
-
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 def sortTuple(t):
     l = list(t)
@@ -9,9 +8,12 @@ def sortTuple(t):
     return tuple(l)
 
 
-class TestDateComponentsSupport(PloneTestCase.PloneTestCase):
+class TestDateComponentsSupport(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase(self)
         date = DateTime(2002, 8, 1, 17, 42, 0)
         self.d = self.portal.date_components_support(date)
 
@@ -165,9 +167,12 @@ class TestDateComponentsSupport(PloneTestCase.PloneTestCase):
         self.assertEqual(ampm, [])
 
 
-class TestDateComponentsSupportDefault(PloneTestCase.PloneTestCase):
+class TestDateComponentsSupportDefault(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase(self)
         self.d = self.portal.date_components_support(None)
 
     def testElements(self):
@@ -315,9 +320,12 @@ class TestDateComponentsSupportDefault(PloneTestCase.PloneTestCase):
         self.assertEqual(ampm, [])
 
 
-class TestDateComponentsSupportAMPM(PloneTestCase.PloneTestCase):
+class TestDateComponentsSupportAMPM(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase(self)
         date = DateTime(2002, 8, 1, 17, 42, 0)
         self.d = self.portal.date_components_support(date, use_ampm=1)
 
@@ -372,9 +380,12 @@ class TestDateComponentsSupportAMPM(PloneTestCase.PloneTestCase):
             self.assertEqual(ampm[i], data[i])
 
 
-class TestDateComponentsSupportAMPMDefault(PloneTestCase.PloneTestCase):
+class TestDateComponentsSupportAMPMDefault(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase(self)
         self.d = self.portal.date_components_support(None, use_ampm=1)
 
     def testElements(self):
@@ -414,7 +425,7 @@ class TestDateComponentsSupportAMPMDefault(PloneTestCase.PloneTestCase):
             self.assertEqual(ampm[i], data[i])
 
 
-class TestDateComponentsSupportMinuteStepDefault(PloneTestCase.PloneTestCase):
+class TestDateComponentsSupportMinuteStepDefault(CMFPloneTestCase):
 
     def testMinutesStep1(self):
         data = [
@@ -443,7 +454,7 @@ class TestDateComponentsSupportMinuteStepDefault(PloneTestCase.PloneTestCase):
             self.assertEqual(minutes[i], data[i])
 
 
-class TestSpecialCases(PloneTestCase.PloneTestCase):
+class TestSpecialCases(CMFPloneTestCase):
 
     def testNoneUsesDefault(self):
         d = self.portal.date_components_support(None)

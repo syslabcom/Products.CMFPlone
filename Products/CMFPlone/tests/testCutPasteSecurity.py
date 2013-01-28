@@ -1,19 +1,21 @@
-from urllib2 import HTTPError
-
-from Products.CMFPlone.tests import PloneTestCase
-
 from AccessControl import Unauthorized
-from OFS.CopySupport import CopyError
 from Acquisition import aq_base
-import transaction
+from OFS.CopySupport import CopyError
+from Products.CMFCore.interfaces import IContentish
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from urllib2 import HTTPError
 from zope.component import provideHandler, getGlobalSiteManager
 from zope.lifecycleevent.interfaces import IObjectMovedEvent
-from Products.CMFCore.interfaces import IContentish
+import transaction
 
 
-class TestCutPasteSecurity(PloneTestCase.PloneTestCase):
+class TestCutPasteSecurity(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.portal.acl_users._doAddUser('user1', 'secret', ['Member'], [])
         self.portal.acl_users._doAddUser('user2', 'secret', ['Member'], [])
         self.membership = self.portal.portal_membership
@@ -131,7 +133,7 @@ class TestCutPasteSecurity(PloneTestCase.PloneTestCase):
         types.Document.manage_changeProperties(global_allow=0)
 
         # need to be manager to paste into portal
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
         # copy and pasting the object into the portal should raise
         # a ValueError.
@@ -146,10 +148,13 @@ def failingEventHandler(obj, event):
     raise Exception("Failing for Testing")
 
 
-class CutPasteFailureTests(PloneTestCase.FunctionalTestCase):
+class CutPasteFailureTests(CMFPloneTestCase):
     """See https://dev.plone.org/ticket/9365"""
 
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
     def afterSetUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder.invokeFactory('Folder', id='source-folder')
         self.folder.invokeFactory('Folder', id='destination-folder')
         self.folder['source-folder'].invokeFactory('Document', id='doc')

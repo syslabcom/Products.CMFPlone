@@ -1,40 +1,49 @@
-from Products.CMFPlone.tests import PloneTestCase
-
-from Products.CMFPlone.tests.PloneTestCase import default_user
-from Products.CMFPlone.tests.PloneTestCase import default_password
+from Acquisition import aq_base
+from plone.app.testing import login
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.PloneFolder import ReplaceableWrapper
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from utils import publish
+from zope.event import notify
+from zope.traversing.interfaces import BeforeTraverseEvent
 
 import difflib
 import re
-
-from Acquisition import aq_base
-from zope.event import notify
-from zope.traversing.interfaces import BeforeTraverseEvent
-from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone.utils import _createObjectByType
-from Products.CMFPlone.PloneFolder import ReplaceableWrapper
+import transaction
 
 RE_REMOVE_DOCCONT = re.compile('\s*href="http://.*?#content"')
 RE_REMOVE_SKIPNAV = re.compile('\s*href="http://.*?#portal-globalnav"')
 RE_REMOVE_TABS = re.compile('<ul id="portal-globalnav".*?</ul>', re.S)
 
 
-class TestPloneToolBrowserDefault(PloneTestCase.FunctionalTestCase):
+class TestPloneToolBrowserDefault(CMFPloneTestCase):
     """Test the PloneTool's browserDefault() method in various use cases.
     This class basically tests the functionality when items have default pages
     and actions that resolve to actual objects. The cases where a default_page
     may be set to a non-existing object are covered by TestDefaultPage below.
     """
 
-    def afterSetUp(self):
-        self.setRoles(['Manager'])
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
 
         # make sure the test request gets marked with the default theme layer
-        notify(BeforeTraverseEvent(self.portal, self.app.REQUEST))
+        notify(BeforeTraverseEvent(self.portal, self.request))
 
-        _createObjectByType('Folder',       self.portal, 'atctfolder')
-        _createObjectByType('Document',     self.portal, 'atctdocument')
-        _createObjectByType('File',         self.portal, 'atctfile')
+        if 'atctfolder' not in self.portal.objectIds():
+            self.portal.invokeFactory('Folder', 'atctfolder')
+            self.portal.invokeFactory('Document', 'atctdocument')
+            self.portal.invokeFactory('File', 'atctfile')
+            transaction.commit()
 
         self.putils = getToolByName(self.portal, "plone_utils")
 
@@ -48,7 +57,9 @@ class TestPloneToolBrowserDefault(PloneTestCase.FunctionalTestCase):
         resolved = obj.restrictedTraverse(viewaction)()
         base_path = obj.absolute_url(1)
 
-        response = self.publish(base_path + path, self.basic_auth)
+        response = publish(self.request,
+                           base_path + path,
+                           self.basic_auth)
         body = response.getBody().decode('utf-8')
 
         # request/ACTUAL_URL is fubar in tests, remove lines that depend on it
@@ -129,8 +140,9 @@ class TestPloneToolBrowserDefault(PloneTestCase.FunctionalTestCase):
         self.compareLayoutVsView(self.portal.atctfile, path="/view")
 
     def testBrowserDefaultMixinFileDumpsContent(self):
-        response = self.publish(self.portal.atctfile.absolute_url(1),
-                                self.basic_auth)
+        response = publish(self.request,
+                           self.portal.atctfile.absolute_url(1),
+                           self.basic_auth)
         self.assertEqual(response.getBody(),
                              str(self.portal.atctfile.getFile()))
 
@@ -200,11 +212,16 @@ class TestPloneToolBrowserDefault(PloneTestCase.FunctionalTestCase):
                          (f, ['folder_listing'],))
 
 
-class TestDefaultPage(PloneTestCase.PloneTestCase):
+class TestDefaultPage(CMFPloneTestCase):
     """Test the default_page functionality in more detail
     """
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
+        setRoles(self.portal, TEST_USER_ID, ['Owner',])
         sp = getToolByName(self.portal, "portal_properties").site_properties
         self.default = sp.getProperty('default_page', [])
 
@@ -214,30 +231,23 @@ class TestDefaultPage(PloneTestCase.PloneTestCase):
 
     def testBrowserDefaultPage(self):
         # Test assumes ATContentTypes + BrowserDefaultMixin
-        self.folder.invokeFactory('Document', 'd1', title='document 1')
-        self.folder.setDefaultPage('d1')
-        self.assertEquals(self.portal.plone_utils.browserDefault(self.folder),
-                            (self.folder, ['d1']))
+        self.portal.folder.invokeFactory('Document', 'd1', title='document 1')
+        self.portal.folder.setDefaultPage('d1')
+        self.assertEquals(
+            self.portal.plone_utils.browserDefault(self.portal.folder),
+            (self.portal.folder, ['d1']))
 
 
-class TestPortalBrowserDefault(PloneTestCase.PloneTestCase):
+class TestPortalBrowserDefault(CMFPloneTestCase):
     """Test the BrowserDefaultMixin as implemented by the root portal object
     """
 
-    def afterSetUp(self):
-        self.setRoles(['Manager'])
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-        # Make sure we have the front page; the portal generator should take
-        # care of this, but let's not be dependent on that in the test
-        if not 'front-page' in self.portal.objectIds():
-            self.portal.invokeFactory('Document', 'front-page',
-                                      title='Welcome to Plone')
-        self.portal.setDefaultPage('front-page')
-
-        # Also make sure we have folder_listing as a template
-        self.portal.getTypeInfo().manage_changeProperties(
-                                    view_methods=['folder_listing'],
-                                    default_view='folder_listing')
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
+        login(self.portal, TEST_USER_NAME)
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
 
     def failIfDiff(self, text1, text2):
         """

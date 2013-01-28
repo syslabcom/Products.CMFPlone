@@ -1,11 +1,14 @@
 # Tests the navigationParent script
 
-from Products.CMFPlone.tests import PloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
+class TestNavigationParent(CMFPloneTestCase):
 
-class TestNavigationParent(PloneTestCase.PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-    def afterSetUp(self):
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder.invokeFactory('Folder', 'f1', title='Folder 1')
         self.f1 = getattr(self.folder, 'f1')
         self.f1.invokeFactory('Folder', 'f2', title='Folder 2')
@@ -15,7 +18,7 @@ class TestNavigationParent(PloneTestCase.PloneTestCase):
         self.assertTrue(self.portal.navigationParent() is None)
 
     def testFolderInPortal(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', 'pf', title='portal folder')
         pf = getattr(self.portal, 'pf')
         self.assertEqual(pf.navigationParent(), self.portal.absolute_url())
@@ -92,7 +95,7 @@ class TestNavigationParent(PloneTestCase.PloneTestCase):
     # Permission checks on parent
 
     def testNoParentViewPermission(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', 'pf', title='portal folder')
         pf = getattr(self.portal, 'pf')
         pf.invokeFactory('Folder', 'lf', title='listable folder')
@@ -102,12 +105,12 @@ class TestNavigationParent(PloneTestCase.PloneTestCase):
         lf.manage_permission('List folder contents',
                              ['Member', 'Manager', 'Owner'], 0)
         lf.manage_permission('View', ['Member', 'Manager', 'Owner'], 0)
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
         self.assertTrue(lf.navigationParent() is None)
 
     def testNoParentListPermissions(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', 'pf', title='portal folder')
         pf = getattr(self.portal, 'pf')
         pf.invokeFactory('Folder', 'lf', title='listable folder')
@@ -115,7 +118,7 @@ class TestNavigationParent(PloneTestCase.PloneTestCase):
         pf.manage_permission('List folder contents', ['Manager'], 0)
         lf.manage_permission('List folder contents',
                              ['Member', 'Manager', 'Owner'], 0)
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
         self.assertTrue(lf.navigationParent(
                 checkPermissions=['List folder contents']) is None)

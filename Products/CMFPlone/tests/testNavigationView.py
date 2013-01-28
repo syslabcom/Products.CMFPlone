@@ -1,33 +1,33 @@
-from zope.interface import directlyProvides
-
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
-from Products.CMFPlone.tests.utils import validateCSSIdentifier
-
+from Products.CMFPlone.browser.navigation import CatalogNavigationBreadcrumbs
+from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
 from Products.CMFPlone.browser.navigation import CatalogNavigationTree
 from Products.CMFPlone.browser.navigation import CatalogSiteMap
-from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
-from Products.CMFPlone.browser.navigation import CatalogNavigationBreadcrumbs
 from Products.CMFPlone.browser.navigation import PhysicalNavigationBreadcrumbs
 from Products.CMFPlone.interfaces import IHideFromBreadcrumbs
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.tests.utils import validateCSSIdentifier
+from zope.interface import directlyProvides
 
-portal_name = PloneTestCase.portal_name
 
-
-class TestBaseNavTree(PloneTestCase.PloneTestCase):
+class TestBaseNavTree(CMFPloneTestCase):
     """Tests for the navigation tree . This base test is a little geared toward
        a catalog based implementation for now.
     """
 
     view_class = None
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.request = self.app.REQUEST
         self.populateSite()
         self.setupAuthenticator()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Document', 'doc1')
         self.portal.invokeFactory('Document', 'doc2')
         self.portal.invokeFactory('Document', 'doc3')
@@ -45,7 +45,7 @@ class TestBaseNavTree(PloneTestCase.PloneTestCase):
         folder2.invokeFactory('Document', 'doc22')
         folder2.invokeFactory('Document', 'doc23')
         folder2.invokeFactory('File', 'file21')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testCreateNavTree(self):
         # See if we can create one at all
@@ -358,20 +358,22 @@ class TestCatalogNavTree(TestBaseNavTree):
         view_class = CatalogNavigationTree
 
 
-class TestSiteMap(PloneTestCase.PloneTestCase):
+class TestBaseSiteMap(CMFPloneTestCase):
     """Tests for the sitemap view implementations. This base test is a little
         geared toward a catalog based implementation for now.
     """
 
-    view_class = CatalogSiteMap
+    view_class = None
 
-    def afterSetUp(self):
-        self.request = self.app.REQUEST
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         # Apply a default layer for view lookups to work in Zope 2.9+
         self.populateSite()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Document', 'doc1')
         self.portal.invokeFactory('Document', 'doc2')
         self.portal.invokeFactory('Document', 'doc3')
@@ -389,7 +391,7 @@ class TestSiteMap(PloneTestCase.PloneTestCase):
         folder2.invokeFactory('Document', 'doc22')
         folder2.invokeFactory('Document', 'doc23')
         folder2.invokeFactory('File', 'file21')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testCreateSitemap(self):
         view = self.view_class(self.portal, self.request)
@@ -488,7 +490,11 @@ class TestSiteMap(PloneTestCase.PloneTestCase):
                          '/plone/folder2/file21')
 
 
-class TestBasePortalTabs(PloneTestCase.PloneTestCase):
+class TestSiteMap(TestBaseSiteMap):
+        view_class = CatalogSiteMap
+
+
+class TestBasePortalTabs(CMFPloneTestCase):
     """Tests for the portal tabs view implementations
        This base test is a little geared toward a catalog based implementation
        for now.
@@ -496,18 +502,20 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
 
     view_class = None
 
-    def afterSetUp(self):
-        self.request = self.app.REQUEST
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.populateSite()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Document', 'doc1')
         self.portal.invokeFactory('Document', 'doc2')
         self.portal.invokeFactory('Document', 'doc3')
         self.portal.invokeFactory('Folder', 'folder1')
         self.portal.invokeFactory('Folder', 'folder2')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testCreateTopLevelTabs(self):
         # See if we can create one at all
@@ -529,7 +537,7 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
         view = self.view_class(self.portal, self.request)
         tabs1 = view.topLevelTabs(actions=[])
         # Must be manager to change order on portal itself
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.portal.folder_position('up', 'folder2')
         view = self.view_class(self.portal, self.request)
         tabs2 = view.topLevelTabs(actions=[])
@@ -646,7 +654,7 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
         view = self.view_class(self.portal, self.request)
         tabs = view.topLevelTabs(actions=[])
         orig_len = len(tabs)
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.portal.invokeFactory('Document', 'foo')
         view = self.view_class(self.portal, self.request)
         tabs = view.topLevelTabs(actions=[])
@@ -655,13 +663,13 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
 
     def testRootBelowPortalRoot(self):
 
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.folder1.invokeFactory('Document', 'doc1')
         self.portal.folder1.invokeFactory('Document', 'doc2')
         self.portal.folder1.invokeFactory('Document', 'doc3')
         self.portal.folder1.invokeFactory('Folder', 'folder1')
         self.portal.folder1.invokeFactory('Folder', 'folder2')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
         self.portal.portal_properties.navtree_properties.root = '/folder1'
         self.portal.portal_properties.site_properties \
@@ -675,7 +683,7 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
         self.assertEqual(tabs[1]['id'], 'folder2')
 
     def testPortalTabsNotIncludeViewNamesInCSSid(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('File', 'file1')
         view = self.view_class(self.portal, self.request)
         tabs = view.topLevelTabs(actions=[])
@@ -683,7 +691,7 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
             self.assertEqual(validateCSSIdentifier(tab['id']), True)
 
     def testLinkRemoteUrlsUsedUnlessLinkCreator(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Link', 'link1')
         self.portal.link1.setRemoteUrl('http://plone.org')
         self.portal.link1.reindexObject()
@@ -694,7 +702,7 @@ class TestBasePortalTabs(PloneTestCase.PloneTestCase):
             if tab['id'] == 'link1':
                 self.assertTrue(tab['url'] == 'http://nohost/plone/link1')
 
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.link1.setCreators(['some_other_user'])
         self.portal.link1.reindexObject()
         tabs = view.topLevelTabs(actions=[])
@@ -709,23 +717,25 @@ class TestCatalogPortalTabs(TestBasePortalTabs):
         view_class = CatalogNavigationTabs
 
 
-class TestBaseBreadCrumbs(PloneTestCase.PloneTestCase):
+class TestBaseBreadCrumbs(CMFPloneTestCase):
     """Tests for the portal tabs query
     """
 
     view_class = None
 
-    def afterSetUp(self):
-        self.request = self.app.REQUEST
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.populateSite()
 
     def populateSite(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', 'folder1')
         folder1 = getattr(self.portal, 'folder1')
         folder1.invokeFactory('Document', 'doc11')
         folder1.invokeFactory('File', 'file11')
-        self.setRoles(['Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Member'])
 
     def testCreateBreadCrumbs(self):
         # See if we can create one at all

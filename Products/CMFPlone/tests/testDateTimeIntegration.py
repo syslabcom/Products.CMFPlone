@@ -8,13 +8,21 @@
 # for more information about this.  please also note that these tests
 # may produce false positives when run in the GMT time zone!
 
-from Products.CMFPlone.tests.PloneTestCase import PloneTestCase
-from Products.CMFPlone.tests.PloneTestCase import FunctionalTestCase
 from DateTime import DateTime
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneFunctionalTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from time import localtime
+import transaction
 
+class DateTimeTests(CMFPloneTestCase):
 
-class DateTimeTests(PloneTestCase):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
     def testModificationDate(self):
         obj = self.folder
@@ -56,19 +64,23 @@ class DateTimeTests(PloneTestCase):
         self.assertTrue(date.equalTo(expired), (date, expired))
 
 
-class DateTimeFunctionalTests(FunctionalTestCase):
+class DateTimeFunctionalTests(CMFPloneFunctionalTestCase):
+
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
 
     def testNonDSTPublicationDateRemainsUnchangedThroughEdit(self):
         # this test is for a date when daylight savings time is not in effect
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         obj = self.portal['front-page']
         # the test is performed in the local timezone, and in 2 two alternate
         # timezones (to make sure one is different from the local timezone)
+        transaction.commit()
         for tz in ('', ' US/Central', ' US/Eastern'):
             # save the time represented in the specified time zone
             obj.setEffectiveDate('2020-02-20 00:00%s' % tz)
             self.assertTrue(obj.effective_date.ISO8601().startswith(
                 '2020-02-20T00:00:00'))
+            transaction.commit()
             start_value = obj.effective_date
             browser = self.getBrowser()
             browser.open(obj.absolute_url())
@@ -97,15 +109,17 @@ class DateTimeFunctionalTests(FunctionalTestCase):
 
     def testDSTPublicationDateRemainsUnchangedThroughEdit(self):
         # this test is for a date when daylight savings time is in effect
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         obj = self.portal['front-page']
         # the test is performed in the local timezone, and in 2 two alternate
         # timezones (to make sure one is different from the local timezone)
+        transaction.commit()
         for tz in ('', ' GMT-6', ' GMT-5'):
             # save the time represented in the specified time zone
             obj.setEffectiveDate('2020-06-20 16:00%s' % tz)
             self.assertTrue(obj.effective_date.ISO8601().startswith(
                 '2020-06-20T16:00:00'))
+            transaction.commit()
             start_value = obj.effective_date
             browser = self.getBrowser()
             browser.open(obj.absolute_url())
@@ -137,7 +151,7 @@ class DateTimeFunctionalTests(FunctionalTestCase):
             has to be respected.
             See Products.Archetypes.Field.DateTimeField.set
         """
-        self.setRoles(('Manager',))
+        setRoles(self.portal, TEST_USER_ID, ('Manager',))
         obj = self.portal['front-page']
         obj.setEffectiveDate('2010-01-01 10:00 Europe/Belgrade')
         obj.setExpirationDate('2010-06-01 10:00 Europe/Belgrade')

@@ -1,10 +1,25 @@
-from Products.CMFPlone.tests import PloneTestCase
-from Products.CMFPlone.tests import dummy
+from Acquisition import aq_base
+from plone.portlets.constants import CONTEXT_CATEGORY as CONTEXT_PORTLETS
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletManager
+from Products.CMFCore.CachingPolicyManager import CachingPolicyManager
+from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.tests.base.testcase import WarningInterceptor
-
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone import setuphandlers
+from Products.CMFPlone.factory import _DEFAULT_PROFILE
+from Products.CMFPlone.tests import dummy
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
+from Products.CMFPlone.UnicodeSplitter import Splitter, I18NNormalizer
+from Products.GenericSetup.browser.manage import ExportStepsView
+from Products.GenericSetup.browser.manage import ImportStepsView
+from Products.StandardCacheManagers.AcceleratedHTTPCacheManager import AcceleratedHTTPCacheManager
+from Products.StandardCacheManagers.RAMCacheManager import RAMCacheManager
 from zope.component import getGlobalSiteManager
-from zope.component import getSiteManager
 from zope.component import getMultiAdapter
+from zope.component import getSiteManager
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.interfaces import IComponentLookup
@@ -12,31 +27,13 @@ from zope.component.interfaces import IComponentRegistry
 from zope.location.interfaces import ISite
 from zope.site.hooks import setSite, clearSite
 
-from Acquisition import aq_base
 
-from Products.CMFCore.CachingPolicyManager import CachingPolicyManager
-from Products.CMFCore.permissions import AccessInactivePortalContent
-from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone import setuphandlers
-from Products.CMFPlone.factory import _DEFAULT_PROFILE
-from Products.CMFPlone.UnicodeSplitter import Splitter, I18NNormalizer
-from Products.GenericSetup.browser.manage import ExportStepsView
-from Products.GenericSetup.browser.manage import ImportStepsView
+class TestPortalCreation(CMFPloneTestCase, WarningInterceptor):
 
-from Products.StandardCacheManagers.AcceleratedHTTPCacheManager import \
-     AcceleratedHTTPCacheManager
-from Products.StandardCacheManagers.RAMCacheManager import \
-     RAMCacheManager
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
 
-from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import IPortletManager
-from plone.portlets.interfaces import ILocalPortletAssignmentManager
-from plone.portlets.constants import CONTEXT_CATEGORY as CONTEXT_PORTLETS
-
-
-class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
-
-    def afterSetUp(self):
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.membership = self.portal.portal_membership
         self.workflow = self.portal.portal_workflow
         self.types = self.portal.portal_types
@@ -336,7 +333,7 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
         self.assertEqual(collection.checkCreationFlag(), False)
 
     def testObjectButtonActions(self):
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         atool = self.actions
         self.assertFalse(atool.getActionInfo('object_buttons/cut') is None)
         self.assertFalse(atool.getActionInfo('object_buttons/copy') is None)
@@ -454,24 +451,24 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
     def testPloneSiteFTIHasMethodAliases(self):
         # Should add method aliases to the Plone Site FTI
         expected_aliases = {
-                '(Default)'  : '(dynamic view)',
-                'view'       : '(selected layout)',
-                'edit'       : '@@site-controlpanel',
-                'sharing'    : '@@sharing',
+                '(Default)': '(dynamic view)',
+                'view': '(selected layout)',
+                'edit': '@@site-controlpanel',
+                'sharing': '@@sharing',
               }
         fti = self.portal.getTypeInfo()
         aliases = fti.getMethodAliases()
         self.assertEqual(aliases, expected_aliases)
 
     def testSiteActions(self):
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         atool = self.actions
         self.assertFalse(atool.getActionInfo('site_actions/sitemap') is None)
         self.assertFalse(atool.getActionInfo('site_actions/contact') is None)
         self.assertFalse(atool.getActionInfo('site_actions/accessibility') is None)
 
     def testSetupAction(self):
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         atool = self.actions
         self.assertFalse(atool.getActionInfo('user/plone_setup') is None)
         self.assertFalse(atool.getActionInfo('site_actions/plone_setup') is None)
@@ -539,14 +536,14 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
 
     def testObjectButtonActionsInvisibleOnPortalRoot(self):
         # only a manager would have proper permissions
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         acts = self.actions.listFilteredActionsFor(self.portal)
         buttons = acts.get('object_buttons', [])
         self.assertEquals(0, len(buttons))
 
     def testObjectButtonActionsInvisibleOnPortalDefaultDocument(self):
         # only a manager would have proper permissions
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.portal.invokeFactory('Document', 'index_html')
         acts = self.actions.listFilteredActionsFor(self.portal.index_html)
         buttons = acts.get('object_buttons', [])
@@ -554,7 +551,7 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
 
     def testObjectButtonActionsOnDefaultDocumentDoNotApplyToParent(self):
         # only a manager would have proper permissions
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.invokeFactory('Document', 'index_html')
         acts = self.actions.listFilteredActionsFor(self.folder.index_html)
         buttons = acts['object_buttons']
@@ -566,7 +563,7 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
 
     def testObjectButtonActionsPerformCorrectAction(self):
         # only a manager would have proper permissions
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         self.folder.invokeFactory('Document', 'index_html')
         acts = self.actions.listFilteredActionsFor(self.folder.index_html)
         buttons = acts['object_buttons']
@@ -587,7 +584,7 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
 
     def testObjectButtonActionsInExpectedOrder(self):
         # The object buttons need to be in a standardized order
-        self.setRoles(['Manager', 'Member'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager', 'Member'])
         # fill the copy buffer so we see all actions
         self.folder.cb_dataValid = True
         acts = self.actions.listFilteredActionsFor(self.folder)
@@ -706,7 +703,7 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
 
     def testMakeSnapshot(self):
         # GenericSetup snapshot should work
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         snapshot_id = self.setup._mangleTimestampName('test')
         self.setup.createSnapshot(snapshot_id)
 
@@ -934,9 +931,12 @@ class TestPortalCreation(PloneTestCase.PloneTestCase, WarningInterceptor):
         self.assertEqual([i['id'] for i in view.invalidSteps()], [])
 
 
-class TestPortalBugs(PloneTestCase.PloneTestCase):
+class TestPortalBugs(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.membership = self.portal.portal_membership
         self.members = self.membership.getMembersFolder()
         self.catalog = self.portal.portal_catalog
@@ -999,9 +999,12 @@ class TestPortalBugs(PloneTestCase.PloneTestCase):
         self.assertTrue(1 == 1)
 
 
-class TestManagementPageCharset(PloneTestCase.PloneTestCase):
+class TestManagementPageCharset(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.properties = self.portal.portal_properties
 
     def testManagementPageCharset(self):

@@ -1,14 +1,16 @@
-import urlparse
-from Products.CMFPlone.tests import PloneTestCase
-
+from AccessControl import getSecurityManager
+from AccessControl import Permissions
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from Products.ATContentTypes.permission import AddTopics
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_FUNCTIONAL_TESTING
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 from Products.PluggableAuthService.interfaces.plugins import IChallengePlugin
 
-from AccessControl import Permissions
-from AccessControl import getSecurityManager
-default_user = PloneTestCase.default_user
-default_password = PloneTestCase.default_password
+import urlparse
 
 
 def sortTuple(t):
@@ -19,9 +21,12 @@ def sortTuple(t):
 ADD_DOC_PERM = 'ATContentTypes: Add Document'
 
 
-class TestPortalFactory(PloneTestCase.PloneTestCase):
+class TestPortalFactory(CMFPloneTestCase):
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.membership = self.portal.portal_membership
         self.membership.addMember('member', 'secret', ['Member'], [])
         self.membership.addMember('manager', 'secret', ['Manager'], [])
@@ -138,15 +143,18 @@ class TestPortalFactory(PloneTestCase.PloneTestCase):
         self.assertEqual(temp_roles, new_roles)
 
 
-class TestCreateObject(PloneTestCase.PloneTestCase):
+class TestCreateObject(CMFPloneTestCase):
 
-    def testCreateObjectByDoCreate(self):
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
         # doCreate should create the real object
+        CMFPloneTestCase.setUp(self)
         temp_object = \
             self.folder.restrictedTraverse('portal_factory/Document/tmp_id')
         foo = temp_object.portal_factory.doCreate(temp_object, 'foo')
         self.assertTrue('foo' in self.folder)
-        self.assertEqual(foo.get_local_roles_for_userid(default_user),
+        self.assertEqual(foo.get_local_roles_for_userid(TEST_USER_NAME),
                          ('Owner',))
 
     def testUnauthorizedToCreateObjectByDoCreate(self):
@@ -167,7 +175,7 @@ class TestCreateObject(PloneTestCase.PloneTestCase):
         self.assertTrue('foo' in self.folder)
         self.assertEqual(self.folder.foo.Title(), 'Foo')
         self.assertEqual(
-                self.folder.foo.get_local_roles_for_userid(default_user),
+                self.folder.foo.get_local_roles_for_userid(TEST_USER_NAME),
                 ('Owner',))
 
     def testUnauthorizedToCreateObjectByDocumentEdit(self):
@@ -180,7 +188,7 @@ class TestCreateObject(PloneTestCase.PloneTestCase):
                           id='foo', title='Foo', text_format='plain', text='')
 
     def testCopyPermission(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', id='folder_to_copy')
 
         pm = self.portal.portal_membership
@@ -194,7 +202,7 @@ class TestCreateObject(PloneTestCase.PloneTestCase):
             self.portal, self.portal, 'manage_copyObjects'))
 
     def testRenamePermission(self):
-        self.setRoles(['Manager'])
+        setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.portal.invokeFactory('Folder', id='folder_to_copy')
 
         pm = self.portal.portal_membership
@@ -208,13 +216,16 @@ class TestCreateObject(PloneTestCase.PloneTestCase):
             self.portal, self.portal, 'manage_renameObjects'))
 
 
-class TestCreateObjectByURL(PloneTestCase.FunctionalTestCase):
+class TestCreateObjectByURL(CMFPloneTestCase):
     '''Weeee, functional tests'''
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder_url = self.folder.absolute_url()
         self.folder_path = '/%s' % self.folder.absolute_url(1)
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         # We want 401 responses, not redirects to a login page
         plugins = self.portal.acl_users.plugins
         plugins.deactivatePlugin(IChallengePlugin, 'credentials_cookie_auth')
@@ -304,7 +315,7 @@ class TestCreateObjectByURL(PloneTestCase.FunctionalTestCase):
         self.assertTrue('foo' in self.folder)
         self.assertEqual(self.folder.foo.Title(), 'Foo')
         self.assertEqual(
-                self.folder.foo.get_local_roles_for_userid(default_user),
+                self.folder.foo.get_local_roles_for_userid(TEST_USER_NAME),
                 ('Owner',))
 
     def testUnauthorizedToCreateObjectByDocumentEdit(self):
@@ -316,13 +327,16 @@ class TestCreateObjectByURL(PloneTestCase.FunctionalTestCase):
         self.assertEqual(response.getStatus(), 500)  # ValueError
 
 
-class TestPortalFactoryTraverseByURL(PloneTestCase.FunctionalTestCase):
+class TestPortalFactoryTraverseByURL(CMFPloneTestCase):
     '''Weeee, functional tests'''
 
-    def afterSetUp(self):
+    layer = PLONE_TEST_CASE_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder_url = self.folder.absolute_url()
         self.folder_path = '/%s' % self.folder.absolute_url(1)
-        self.basic_auth = '%s:%s' % (default_user, default_password)
+        self.basic_auth = '%s:%s' % (TEST_USER_NAME, TEST_USER_PASSWORD)
         # We want 401 responses, not redirects to a login page
         plugins = self.portal.acl_users.plugins
         plugins.deactivatePlugin(IChallengePlugin, 'credentials_cookie_auth')

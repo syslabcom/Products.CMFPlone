@@ -1,11 +1,14 @@
-from Products.CMFPlone.tests import PloneTestCase
+from Products.CMFPlone.tests.CMFPloneTestCase import CMFPloneTestCase
+from Products.CMFPlone.tests.layers import PLONE_TEST_CASE_INTEGRATION_TESTING
 
 
-class TestExternalEditorEnabled(PloneTestCase.PloneTestCase):
+class TestExternalEditorEnabled(CMFPloneTestCase):
     '''Tests the externalEditorEnabled script'''
 
-    def afterSetUp(self):
-        PloneTestCase.PloneTestCase.afterSetUp(self)
+    layer = PLONE_TEST_CASE_INTEGRATION_TESTING
+
+    def setUp(self):
+        CMFPloneTestCase.setUp(self)
         self.folder.invokeFactory('Document', 'doc')
         self.doc = self.folder.doc
         self.folder.invokeFactory('Folder', 'folder2')
