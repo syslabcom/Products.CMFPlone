@@ -217,9 +217,6 @@ def setupPortalContent(p):
         fp.setLanguage(language)
         fp.setText(front_text, mimetype='text/html')
 
-        # Show off presentation mode
-        fp.setPresentation(True)
-
         # Mark as fully created
         fp.unmarkCreationFlag()
 

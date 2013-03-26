@@ -4,10 +4,119 @@
 
 Changelog
 =========
-
-
-4.3a3 (unreleased)
+4.4a1 (unreleased)
 ------------------
+
+- Add indexer for location so metadata is included in catalog
+  [vangheem]
+
+- Fix rss 2.0 not providing actual link
+  [vangheem]
+
+- Forward port inline validation fix from 4.3rc2.
+  [mcmahon]
+
+- Merged PLIP #13270: Move presentation mode out of core.
+  If the feature is still desired, use the plone.app.s5slideshow add-on.
+  [davisagli]
+
+- PLIP #13358: Changed table in main_template.pt to div structure
+  - Removed xml:lang on html tag
+  - Changed charset to html5
+  - Removed deprecated css-slot
+  - Removed old-style corner constructs
+  [TH-code]
+
+- Base profile memberdata_properties.xml now includes timezone member
+  property.
+  [seanupton]
+
+- Merged PLIP #10886: plone.app.event.
+  Don't install p.a.event by default, so one can explicitly choose to install
+  the Archetypes profile "plone.app.event.at" or the Dexterity profile
+  "plone.app.event.dx". PAE integration Cleanup.
+  [thet]
+
+- Test for #7627 (https://dev.plone.org/ticket/7627) (backport from 4.3)
+  [kiorky] 
+
+
+4.3rc1 (released)
+-------------------
+
+- add newsml feed type
+  [vangheem]
+
+- add overlay for folder default page folder factories link
+  [vangheem]
+
+- add sitemap.xml.gz to robots.txt fixes https://dev.plone.org/ticket/13319
+  [vangheem]
+
+- update add site, overview and upgrade templates to use absolute urls
+  to reference css and image resources so it works with virtual hosted
+  sites to sub-folders fixes #11153
+  [vangheem]
+
+- Allow the Content-Type header to be set in registered_notify_template.pt
+  [esteele]
+
+- Extract RegistrationTool's sending of registration emails so that it can be
+  more easily overridden.
+  [esteele]
+
+- bump profile version
+  [vangheem]
+
+- Add event to fix products installed with latest keyword
+  activated by default. Event finds new products installed with
+  the latest keyword and updates them to the last profile version.
+  [eleddy]
+
+- Add event to trigger when a reordering is happening. Without this
+  collective.solr and maybe other alternative indexes are kind of lost.
+  Backport from 4.2.x
+  [do3cc]
+
+- Robot Framework based acceptance tests added.
+  [timo]
+
+- Remove comment form overlay which was only used for the old
+  pre-plone.app.discussion reply form.
+  [timo]
+
+
+4.3b2 (2013-01-17)
+------------------
+
+- removing ``plone_ecmascript/test_ecmascripts.pt`` since its not working and
+  since its not being ran by out test suite.
+  [garbas]
+
+- Call searchUsers with the 'name' argument instead of 'login'.
+  'name' is the officially supported way according to the PAS interface.
+  [maurits]
+
+
+4.3b1 (2012-01-02)
+------------------
+
+- Changes to dependencies when creating a new site (plone-final) to fix
+  #11997.
+  [keul]
+
+- Generate valid atom feeds
+  [lentinj]
+
+- Fix quoted atom.xml feed syndication content type to "html".
+  [elro]
+
+- Add various security fixes based on PloneHotfix20121106.
+  [davisagli]
+
+- Fix RegistrationTool testPasswordValidity method. See
+  https://dev.plone.org/ticket/13325
+  [vipod]
 
 - Fix form_tabbing.js so it stays on the same fieldset when an Archetypes
   edit form is submitted and returns to itself.
@@ -25,6 +134,16 @@ Changelog
   error gets shown and logged.
   [do3cc]
 
+- Fix sitemap rendering. No longer uses portlet_navtree_macro.pt from
+  the plone_deprecated skin, but a browser view template with much
+  simplified logic.
+  [danjacka]
+
+- Revealed hidden features for sorting folders (#11317).
+  [keul]
+
+- Don't swallow exceptins on object_paste and folder_paste (#9365).
+  [gaudenz]
 
 4.3a2 (2012-10-18)
 ------------------

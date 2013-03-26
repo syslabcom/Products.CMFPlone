@@ -15,6 +15,7 @@
   <include package="plone.app.contentrules" />
   <include package="plone.app.controlpanel" />
   <include package="plone.app.customerize" />
+  <include package="plone.app.event" />
   <include package="plone.app.discussion" />
   <include package="plone.app.folder" />
   <include package="plone.app.form" />
@@ -102,5 +103,8 @@
         package="plone"
         file="configure.zcml"
         />
+
+  <subscriber for="Products.GenericSetup.events.ProfileImportedEvent"
+              handler=".events.profileImportedEventHandler"/>
 
 </configure>

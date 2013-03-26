@@ -50,7 +50,7 @@ jQuery.extend(jQuery.tools.overlay.conf,
 
 jQuery(function($){
 
-    if (jQuery.browser.msie && parseInt(jQuery.browser.version, 10) < 7) {
+    if ($.browser.msie && parseInt($.browser.version, 10) < 7) {
         // it's not realistic to think we can deal with all the bugs
         // of IE 6 and lower. Fortunately, all this is just progressive
         // enhancement.
@@ -92,19 +92,6 @@ jQuery(function($){
             noform: function(el) {return $.plonepopups.noformerrorshow(el, 'close');}
         }
     );
-
-    // comment form
-    $('form[name="reply"]').prepOverlay(
-        {
-            subtype: 'ajax',
-            filter: common_content_filter,
-            cssclass: 'overlay-comment',
-            formselector: 'form:has(input[name="discussion_reply:method"])',
-            noform: function(el) {return $.plonepopups.noformerrorshow(el, 'redirect');},
-            redirect: $.plonepopups.redirectbasehref
-        }
-    );
-
 
     // display: select content item / change content item
     $('#contextSetDefaultPage, #folderChangeDefaultPage').prepOverlay(
@@ -157,6 +144,18 @@ jQuery(function($){
             width:'40%'
         }
     );
+
+    // Add item to folderish default page
+    $('dl#plone-contentmenu-factories a#plone-contentmenu-add-to-default-page').prepOverlay(
+        {
+            subtype: 'ajax',
+            filter: common_content_filter,
+            cssclass: 'overlay-folder-factories',
+            closeselector: '[name="form.button.Cancel"]',
+            width:'40%'
+        }
+    );
+
 
     // registration
     $('#portal-personaltools a[href$="/@@register"]').prepOverlay(

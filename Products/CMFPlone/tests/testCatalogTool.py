@@ -107,11 +107,6 @@ class TestCatalogSetup(PloneTestCase.PloneTestCase):
         self.assertEqual(self.catalog.Indexes['effective'].__class__.__name__,
                          'DateIndex')
 
-    def testEndIsDateIndex(self):
-        # end should be a DateIndex
-        self.assertEqual(self.catalog.Indexes['end'].__class__.__name__,
-                         'DateIndex')
-
     def testExpiresIsDateIndex(self):
         # expires should be a DateIndex
         self.assertEqual(self.catalog.Indexes['expires'].__class__.__name__,
@@ -120,11 +115,6 @@ class TestCatalogSetup(PloneTestCase.PloneTestCase):
     def testModifiedIsDateIndex(self):
         # modified should be a DateIndex
         self.assertEqual(self.catalog.Indexes['modified'].__class__.__name__,
-                         'DateIndex')
-
-    def testStartIsDateIndex(self):
-        # start should be a DateIndex
-        self.assertEqual(self.catalog.Indexes['start'].__class__.__name__,
                          'DateIndex')
 
     def testEffectiveRangeIsDateRangeIndex(self):
@@ -1031,6 +1021,18 @@ class TestIndexers(PloneTestCase.PloneTestCase):
         wrapped = IndexableObjectWrapper(self.doc, self.portal.portal_catalog)
         self.assertTrue(wrapped.UID)
         self.assertTrue(uuid == wrapped.UID)
+
+
+class TestMetadata(PloneTestCase.PloneTestCase):
+    """
+    """
+
+    def testLocationAddedToMetdata(self):
+        self.folder.invokeFactory('Document', 'doc', title='document', location="foobar")
+        doc = self.folder.doc
+        catalog = self.portal.portal_catalog
+        brain = catalog(UID=doc.UID())[0]
+        self.assertEquals(brain.location, doc.getLocation())
 
 
 class TestObjectProvidedIndexExtender(unittest.TestCase):
