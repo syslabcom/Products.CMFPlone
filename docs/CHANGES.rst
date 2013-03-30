@@ -4,8 +4,7 @@
 
 Changelog
 =========
-
-4.3b3 (unreleased)
+4.4a1 (unreleased)
 ------------------
 
 - Move object_cut.cpy to plone_deprecated. There's a browserview in plone.app.content now.
@@ -17,10 +16,83 @@ Changelog
 - Move personalize.cpy to plone_deprecated. It isn't used anymore.
   [tschanzt]
 
+- Add indexer for location so metadata is included in catalog
+  [vangheem]
+
+- Fix rss 2.0 not providing actual link
+  [vangheem]
+
+- Forward port inline validation fix from 4.3rc2.
+  [mcmahon]
+
+- Merged PLIP #13270: Move presentation mode out of core.
+  If the feature is still desired, use the plone.app.s5slideshow add-on.
+  [davisagli]
+
+- PLIP #13358: Changed table in main_template.pt to div structure
+  - Removed xml:lang on html tag
+  - Changed charset to html5
+  - Removed deprecated css-slot
+  - Removed old-style corner constructs
+  [TH-code]
+
+- Base profile memberdata_properties.xml now includes timezone member
+  property.
+  [seanupton]
+
+- Merged PLIP #10886: plone.app.event.
+  Don't install p.a.event by default, so one can explicitly choose to install
+  the Archetypes profile "plone.app.event.at" or the Dexterity profile
+  "plone.app.event.dx". PAE integration Cleanup.
+  [thet]
+
+- Test for #7627 (https://dev.plone.org/ticket/7627) (backport from 4.3)
+  [kiorky] 
+
+
+4.3rc1 (released)
+-------------------
+
+- add newsml feed type
+  [vangheem]
+
+- add overlay for folder default page folder factories link
+  [vangheem]
+
+- add sitemap.xml.gz to robots.txt fixes https://dev.plone.org/ticket/13319
+  [vangheem]
+
+- update add site, overview and upgrade templates to use absolute urls
+  to reference css and image resources so it works with virtual hosted
+  sites to sub-folders fixes #11153
+  [vangheem]
+
+- Allow the Content-Type header to be set in registered_notify_template.pt
+  [esteele]
+
+- Extract RegistrationTool's sending of registration emails so that it can be
+  more easily overridden.
+  [esteele]
+
+- bump profile version
+  [vangheem]
+
 - Add event to fix products installed with latest keyword
   activated by default. Event finds new products installed with
   the latest keyword and updates them to the last profile version.
   [eleddy]
+
+- Add event to trigger when a reordering is happening. Without this
+  collective.solr and maybe other alternative indexes are kind of lost.
+  Backport from 4.2.x
+  [do3cc]
+
+- Robot Framework based acceptance tests added.
+  [timo]
+
+- Remove comment form overlay which was only used for the old
+  pre-plone.app.discussion reply form.
+  [timo]
 
 
 4.3b2 (2013-01-17)

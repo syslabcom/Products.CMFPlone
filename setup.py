@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os.path
 
-version = '4.3b3.dev0'
+version = '4.4a1.dev0'
 
 setup(name='Products.CMFPlone',
       version=version,
@@ -9,14 +9,14 @@ setup(name='Products.CMFPlone',
       long_description=open("README.rst").read() + "\n" +
                        open(os.path.join("docs", "CHANGES.rst")).read(),
       classifiers=[
-        "Environment :: Web Environment",
-        "Framework :: Plone",
-        "Framework :: Zope2",
-        "License :: OSI Approved :: GNU General Public License (GPL)",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-        ],
+          "Environment :: Web Environment",
+          "Framework :: Plone",
+          "Framework :: Zope2",
+          "License :: OSI Approved :: GNU General Public License (GPL)",
+          "Operating System :: OS Independent",
+          "Programming Language :: Python",
+          "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+      ],
       keywords='Plone CMF python Zope',
       author='Plone Foundation',
       author_email='plone-developers@lists.sourceforge.net',
@@ -27,11 +27,12 @@ setup(name='Products.CMFPlone',
       include_package_data=True,
       zip_safe=False,
       extras_require=dict(
-        test=[
-          'Products.PloneTestCase',
-          'zope.globalrequest',
-          'zope.testing',
-        ]),
+          test=[
+              'Products.PloneTestCase',
+              'zope.globalrequest',
+              'zope.testing',
+              'plone.app.testing [robot]',
+          ]),
       install_requires=[
           'setuptools',
           'Acquisition',
@@ -80,6 +81,7 @@ setup(name='Products.CMFPlone',
           'plone.app.contentrules',
           'plone.app.controlpanel',
           'plone.app.customerize',
+          'plone.app.event[archetypes, dexterity]',
           'plone.app.discussion',
           'plone.app.folder',
           'plone.app.form',
