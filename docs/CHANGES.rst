@@ -4,17 +4,47 @@
 
 Changelog
 =========
-4.4a1 (unreleased)
-------------------
 
+5.0 (unreleased)
+----------------
 - Move object_cut.cpy to plone_deprecated. There's a browserview in plone.app.content now.
   [tschanzt]
 
 - Move portrait_delete.cpy to plone_deprecated. It isn't used anymore.
   [tschanzt]
 
-- Move personalize.cpy to plone_deprecated. It isn't used anymore.
-  [tschanzt]
+
+4.4a1 (unreleased)
+------------------
+- Some text/* mime types should be Files, not Documents.
+  [rpatterson]
+
+- Remove reference to unimplemented 'make_private' transition in
+  simple_publication_workflow.
+  [danjacka]
+
+- Add a 'max_tabs' option to form-tabbing.js to allow changes to the number of
+  tabs displayed before the script uses a dropdown instead.
+  [esteele]
+
+- register search_rss only for site root
+  [vangheem]
+
+- fix commas in kss-bbb.js for IE7/8 [vangheem]
+
+- Reenable forgotten tests [kiorky]
+
+- Merged PLIP #12344: plone.app.contenttypes.
+  [thet]
+
+- Add missing dependency on zope.cachedescriptors.
+  [thet]
+
+- plone.app.event integration work:
+  - Remove hard dependency on plone.app.event from here and move it to the
+    "Plone" distribution package.
+  - Move more Event related tests to plone.app.event.
+  [thet]
 
 - Add indexer for location so metadata is included in catalog
   [vangheem]
@@ -40,14 +70,29 @@ Changelog
   property.
   [seanupton]
 
-- Merged PLIP #10886: plone.app.event.
-  Don't install p.a.event by default, so one can explicitly choose to install
-  the Archetypes profile "plone.app.event.at" or the Dexterity profile
-  "plone.app.event.dx". PAE integration Cleanup.
+- Merged PLIP #10886: plone.app.event Integration.
   [thet]
 
 - Test for #7627 (https://dev.plone.org/ticket/7627) (backport from 4.3)
-  [kiorky] 
+  [kiorky]
+
+
+4.3.1 (unreleased)
+------------------
+
+- Fail nicely when pasting a deleted item (https://dev.plone.org/ticket/13337)
+  [khink]
+
+- Add distinct classes for live search links.
+  Add id for image details.
+  [cedricmessiant]
+
+4.3rc2 (unreleased)
+-------------------
+
+- Applied petschki's patch which fixes javascript error on enabled
+  'mark special links' option, fixes #12440
+  [saily]
 
 
 4.3rc1 (released)

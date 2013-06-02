@@ -10,18 +10,25 @@ from Products.CMFPlone.Portal import PloneSite
 
 _TOOL_ID = 'portal_setup'
 _DEFAULT_PROFILE = 'Products.CMFPlone:plone'
-_CONTENT_PROFILE = 'Products.CMFPlone:plone-content'
+_AT_CONTENT_PROFILE = 'Products.CMFPlone:plone-content'
+_DEX_CONTENT_PROFILE = 'plone.app.contenttypes:plone-content'
+_ATCONTENTTYPES_PROFILE = 'Products.ATContentTypes:default'
+_PLONE_APP_CONTENTTYPES_PROFILE = 'plone.app.contenttypes:default'
+_CONTENTTYPES_PROFILES = (_ATCONTENTTYPES_PROFILE, _PLONE_APP_CONTENTTYPES_PROFILE,)
 
 # A little hint for PloneTestCase
 _IMREALLYPLONE4 = True
 
 
 class HiddenProfiles(object):
+
     implements(INonInstallable)
 
     def getNonInstallableProfiles(self):
         return [_DEFAULT_PROFILE,
-                _CONTENT_PROFILE,
+                _AT_CONTENT_PROFILE,
+                _DEX_CONTENT_PROFILE,
+                _ATCONTENTTYPES_PROFILE,
                 u'Products.Archetypes:Archetypes',
                 u'Products.CMFDiffTool:CMFDiffTool',
                 u'Products.CMFEditions:CMFEditions',
@@ -72,7 +79,10 @@ def addPloneSite(context, site_id, title='Plone site', description='',
                  create_userfolder=True, email_from_address='',
                  email_from_name='', validate_email=True,
                  profile_id=_DEFAULT_PROFILE, snapshot=False,
-                 extension_ids=(), setup_content=True, default_language='en'):
+                 extension_ids=(),
+                 base_contenttypes_profile=_ATCONTENTTYPES_PROFILE,
+                 setup_content=True,
+                 default_language='en'):
     """Add a PloneSite to the context."""
     context._setObject(site_id, PloneSite(site_id))
     site = context._getOb(site_id)
@@ -86,9 +96,17 @@ def addPloneSite(context, site_id, title='Plone site', description='',
 
     setup_tool.setBaselineContext('profile-%s' % profile_id)
     setup_tool.runAllImportStepsFromProfile('profile-%s' % profile_id)
-    if setup_content:
-        setup_tool.runAllImportStepsFromProfile(
-                        'profile-%s' % _CONTENT_PROFILE)
+    if base_contenttypes_profile is not None \
+       and base_contenttypes_profile in _CONTENTTYPES_PROFILES:
+        profile = 'profile-%s' % base_contenttypes_profile
+        setup_tool.runAllImportStepsFromProfile(profile)
+        # Only set up content if a base contenttypes profile has been provided.
+        if setup_content:
+            if base_contenttypes_profile == _ATCONTENTTYPES_PROFILE:
+                content_profile = _AT_CONTENT_PROFILE
+            else:
+                content_profile = _DEX_CONTENT_PROFILE
+            setup_tool.runAllImportStepsFromProfile('profile-%s' % content_profile)
 
     props = dict(
         title=title,

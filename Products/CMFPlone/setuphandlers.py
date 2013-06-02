@@ -15,7 +15,6 @@ from zope.interface import implements
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
-from Products.ATContentTypes.lib import constraintypes
 from Products.CMFDefault.utils import bodyfinder
 from Products.CMFQuickInstallerTool.interfaces import INonInstallable
 from Products.StandardCacheManagers.AcceleratedHTTPCacheManager \
@@ -244,7 +243,7 @@ def setupPortalContent(p):
 
         folder = p.news
         folder.setOrdering('unordered')
-        folder.setConstrainTypesMode(constraintypes.ENABLED)
+        folder.setConstrainTypesMode(1)
         folder.setLocallyAllowedTypes(['News Item'])
         folder.setImmediatelyAddableTypes(['News Item'])
         folder.setDefaultPage('aggregator')
@@ -293,7 +292,7 @@ def setupPortalContent(p):
                             title=events_title, description=events_desc)
         folder = p.events
         folder.setOrdering('unordered')
-        folder.setConstrainTypesMode(constraintypes.ENABLED)
+        folder.setConstrainTypesMode(1)
         folder.setLocallyAllowedTypes(['Event'])
         folder.setImmediatelyAddableTypes(['Event'])
         folder.setDefaultPage('aggregator')
