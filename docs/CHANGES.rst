@@ -8,6 +8,10 @@ Changelog
 5.0a1 (unreleased)
 ------------------
 
+- remove quickinstall control panel form since a new one was moved to
+  plone.app.controlpanel
+  [vangheem]
+
 - make extensionprofiles selection part of 'advanced' in plone-addsite
   [jaroel]
 
