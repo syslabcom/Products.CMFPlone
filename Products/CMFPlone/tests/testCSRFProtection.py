@@ -1,3 +1,4 @@
+from Acquisition import aq_parent
 from Products.PloneTestCase import PloneTestCase as ptc
 
 from zope.component import queryUtility
@@ -5,6 +6,7 @@ from StringIO import StringIO
 
 from plone.keyring.interfaces import IKeyManager
 from plone.protect.authenticator import AuthenticatorView
+from zope.component import getSiteManager
 
 
 class AuthenticatorTestCase(ptc.FunctionalTestCase):
@@ -102,3 +104,14 @@ class AuthenticatorTestCase(ptc.FunctionalTestCase):
         self.checkAuthenticator(
             '/acl_users/userFolderDelUsers',
             'names:list=%s' % ptc.default_user)
+
+
+class KeyringTestCase(ptc.FunctionalTestCase):
+
+    def afterSetUp(self):
+        self.setRoles(('Manager',))
+
+    def test_zopeRootGetsKeyringInstalled(self):
+        app = aq_parent(self.portal)
+        sm = getSiteManager(app)
+        self.assertTrue(sm.queryUtility(IKeyManager) is not None)
