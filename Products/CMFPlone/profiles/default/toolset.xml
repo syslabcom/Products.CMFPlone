@@ -24,8 +24,6 @@
            class="Products.CMFPlone.PloneControlPanel.PloneControlPanel"/>
  <required tool_id="portal_css"
            class="Products.ResourceRegistries.tools.CSSRegistry.CSSRegistryTool"/>
- <required tool_id="portal_discussion"
-           class="Products.CMFPlone.DiscussionTool.DiscussionTool"/>
  <required tool_id="portal_factory"
            class="Products.CMFPlone.FactoryTool.FactoryTool"/>
  <required tool_id="portal_groupdata"
