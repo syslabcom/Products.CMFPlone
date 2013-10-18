@@ -8,6 +8,10 @@ Changelog
 5.0a1 (unreleased)
 ------------------
 
+- Remove Products.CMFCalendar, which was made obsolete by the integration of
+  plone.app.event.
+  [thet]
+
 - Remove plonetheme.classic from the package dependencies and the default
   extension profile, since it will not ship with Plone 5.
   [timo]

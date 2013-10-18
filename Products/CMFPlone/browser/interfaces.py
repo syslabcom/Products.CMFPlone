@@ -82,95 +82,11 @@ class INewsPortlet(Interface):
         """
 
 
-class IEventsPortlet(Interface):
-    """Interface for portlet to display recent news items"""
-
-    def published_events():
-        """Returns 5 most recently published News Items in reverse
-           chronological order
-        """
-
-    def all_events_link():
-        """Returns URL, relative to the portal, of a page that display all
-           published News Items
-        """
-
-    def prev_events_link():
-        """Returns URL, relative to the portal, of a page that display all
-           past events.
-        """
-
-
 class IRecentPortlet(Interface):
     """Interface for portlet to display recently modified items"""
 
     def results():
         """Get the list of recently modified items"""
-
-
-class ICalendarPortlet(Interface):
-
-    def DateTime():
-        """ """
-
-    def current():
-        """ """
-
-    def current_day():
-        """ """
-
-    def nextYearMax():
-        """ """
-
-    def prevYearMin():
-        """ """
-
-    def year():
-        """ """
-
-    def month():
-        """ """
-
-    def prevMonthTime():
-        """ """
-
-    def nextMonthTime():
-        """ """
-
-    def weeks():
-        """ """
-
-    def showStates():
-        """ """
-
-    def showPrevMonth():
-        """ """
-
-    def showNextMonth():
-        """ """
-
-    def getYearAndMonthToDisplay():
-        """ """
-
-    def getPreviousMonth(month, year):
-        """ """
-
-    def getNextMonth(month, year):
-        """ """
-
-    def getWeekdays(self):
-        """Returns a list of Messages for the weekday names."""
-
-    def getEnglishMonthName(self, month):
-        """Returns the English month name."""
-
-    def getMonthName(self, month):
-        """Returns the month name as a Message."""
-
-    def isToday(self, day):
-        """Returns True if the given day and the current month and year equals
-           today, otherwise False.
-        """
 
 
 class ISitemapView(Interface):

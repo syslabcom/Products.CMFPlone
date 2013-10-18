@@ -8,7 +8,6 @@ from zope.interface import implementedBy, providedBy
 
 from Products.CMFPlone.ActionIconsTool import ActionIconsTool
 from Products.CMFPlone.ActionsTool import ActionsTool
-from Products.CMFPlone.CalendarTool import CalendarTool
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.CMFPlone.DiscussionTool import DiscussionTool
 from Products.CMFPlone.FactoryTool import FactoryTool, TempFolder
@@ -265,7 +264,6 @@ class zope_interface_test(TestCase):
 testClasses = [
     (ActionIconsTool, ()),
     (ActionsTool, ()),
-    (CalendarTool, ()),
     (CatalogTool, ()),
     (DiscussionTool, ()),
     (FactoryTool, ()), (TempFolder, ()),
